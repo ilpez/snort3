@@ -8,6 +8,7 @@ set(EXTERNAL_LIBRARIES
     ${CMAKE_THREAD_LIBS_INIT} # GCC says we must link to the threads library
     ${HWLOC_LIBRARIES}
     ${LUAJIT_LIBRARIES}
+    ${OpenCL_LIBRARY}
     ${OPENSSL_CRYPTO_LIBRARY}
     ${PCAP_LIBRARIES}
     ${PCRE_LIBRARIES}
@@ -19,6 +20,7 @@ set(EXTERNAL_INCLUDES
     ${DNET_INCLUDE_DIR}
     ${FLEX_INCLUDES}
     ${HWLOC_INCLUDE_DIRS}
+    ${OpenCL_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
     ${PCAP_INCLUDE_DIR}
     ${PCRE_INCLUDE_DIR}
@@ -131,6 +133,7 @@ add_subdirectory(network_inspectors)
 add_subdirectory(search_engines)
 add_subdirectory(side_channel)
 add_subdirectory(connectors)
+# add_subdirectory(${OpenCL_LIBRARY})
 
 
 # FIXIT-L Delegate building out the target objects list to subdirectories
@@ -191,6 +194,7 @@ add_executable( snort
     $<TARGET_OBJECTS:time>
     $<TARGET_OBJECTS:trace>
     $<TARGET_OBJECTS:utils>
+    # $<TARGET_OBJECTS:${OpenCL_LIBRARY}>
     ${PIGLET_LIBRARIES}
     ${STATIC_CODEC_PLUGINS}
     ${STATIC_NETWORK_INSPECTOR_PLUGINS}
