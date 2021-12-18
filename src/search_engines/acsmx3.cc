@@ -81,10 +81,39 @@ static inline void ConvertCaseEx(uint8_t *d, const uint8_t *s, int m)
     }
 }
 
-static void *AC_MALLOC(int n)
+enum Acsm3MemoryTpe
+{
+    ACSM3_MEMORY_TYPE__NONE = 0,
+    ACSM3_MEMORY_TYPE__PATTERN,
+    ACSM3_MEMORY_TYPE__MATCHLIST,
+    ACSM3_MEMORY_TYPE__TRANSTABLE,
+    ACSM3_MEMORY_TYPE__FAILSTATE
+};
+
+static void *AC_MALLOC(int n, Acsm3MemoryTpe type)
 {
     void *p = snort_calloc(n);
     
+    switch (type)
+    {
+        case ACSM3_MEMORY_TYPE__PATTERN:
+            acsm3_pattern_memory += n;
+            break;
+        case ACSM3_MEMORY_TYPE__MATCHLIST:
+            acsm3_matchlist_memory += n;
+            break;
+        case ACSM3_MEMORY_TYPE__TRANSTABLE:
+            acsm3_transtable_memory += n;
+            break;
+        case ACSM3_MEMORY_TYPE__FAILSTATE:
+            acsm3_failstate_memory += n;
+            break;
+        case ACSM3_MEMORY_TYPE__NONE:
+            break;
+        default:
+            assert(false);
+    }
+
     acsm3_total_memory += n;
     
     return p;
@@ -114,10 +143,28 @@ static void *AC_MALLOC_DFA(int n, int sizeofstate)
     return p;
 }
 
-static void AC_FREE(void *p, int n)
+static void AC_FREE(void *p, int n, Acsm3MemoryTpe type)
 {
     if(p != nullptr)
     {
+        switch (type)
+        {
+        case ACSM3_MEMORY_TYPE__PATTERN:
+            acsm3_pattern_memory -= n;
+            break;
+        case ACSM3_MEMORY_TYPE__MATCHLIST:
+            acsm3_matchlist_memory -= n;
+            break;
+        case ACSM3_MEMORY_TYPE__TRANSTABLE:
+            acsm3_transtable_memory -= n;
+            break;
+        case ACSM3_MEMORY_TYPE__FAILSTATE:
+            acsm3_failstate_memory -= n;
+            break;
+        case ACSM3_MEMORY_TYPE__NONE:
+        default:
+            break;
+        }
         acsm3_total_memory -= n;
         snort_free(p);
     }
@@ -212,7 +259,7 @@ static int List_putNextStateOpt(
         return 0;
     }
 
-    trans_node_t *tnew = (trans_node_t*)AC_MALLOC(sizeof(trans_node_t));
+    trans_node_t *tnew = (trans_node_t*)AC_MALLOC(sizeof(trans_node_t), ACSM3_MEMORY_TYPE__TRANSTABLE);
 
     if (!tnew) return -1;
 
@@ -245,7 +292,7 @@ static int List_putNextState(
         p = p->next;
     }
 
-    tnew = (trans_node_t*)AC_MALLOC(sizeof(trans_node_t));
+    tnew = (trans_node_t*)AC_MALLOC(sizeof(trans_node_t), ACSM3_MEMORY_TYPE__TRANSTABLE);
     
     if (!tnew) return -1;
 
@@ -271,12 +318,12 @@ static int List_FreeTransTable(ACSM_STRUCT3 *acsm)
         while (t != nullptr)
         {
             p = t->next;
-            AC_FREE(t, sizeof(trans_node_t));
+            AC_FREE(t, sizeof(trans_node_t), ACSM3_MEMORY_TYPE__TRANSTABLE);
             t = p;
         }
     }
     
-    AC_FREE(acsm->acsmTransTable, sizeof(void*) *acsm->acsmMaxStates);
+    AC_FREE(acsm->acsmTransTable, sizeof(void*) *acsm->acsmMaxStates, ACSM3_MEMORY_TYPE__TRANSTABLE);
 
     acsm->acsmTransTable = nullptr;
 
@@ -318,7 +365,7 @@ static ACSM_PATTERN3 *CopyMatchListEntry(ACSM_PATTERN3 *px)
 {
     ACSM_PATTERN3 *p;
     
-    p = (ACSM_PATTERN3*)AC_MALLOC(sizeof(ACSM_PATTERN3));
+    p = (ACSM_PATTERN3*)AC_MALLOC(sizeof(ACSM_PATTERN3), ACSM3_MEMORY_TYPE__MATCHLIST);
 
     memcpy(p, px, sizeof(ACSM_PATTERN3));
 
@@ -330,7 +377,7 @@ static void AddMatchListEntry(
 )
 {
     ACSM_PATTERN3 *p;
-    p = (ACSM_PATTERN3*)AC_MALLOC(sizeof(ACSM_PATTERN3));
+    p = (ACSM_PATTERN3*)AC_MALLOC(sizeof(ACSM_PATTERN3), ACSM3_MEMORY_TYPE__MATCHLIST);
 
     memcpy(p, px, sizeof(ACSM_PATTERN3));
     p->next = acsm->acsmMatchList[state];
@@ -531,7 +578,7 @@ static int Conv_List_To_Full(ACSM_STRUCT3 *acsm)
 
 ACSM_STRUCT3 *acsmNew3(const MpseAgent *agent)
 {
-    ACSM_STRUCT3 *p = (ACSM_STRUCT3*)AC_MALLOC(sizeof(ACSM_STRUCT3));
+    ACSM_STRUCT3 *p = (ACSM_STRUCT3*)AC_MALLOC(sizeof(ACSM_STRUCT3), ACSM3_MEMORY_TYPE__NONE);
 
     if (p)
     {
@@ -549,13 +596,13 @@ int acsmAddPattern3(
 {
     ACSM_PATTERN3* plist;
 
-    plist = (ACSM_PATTERN3*)AC_MALLOC(sizeof(ACSM_PATTERN3));
+    plist = (ACSM_PATTERN3*)AC_MALLOC(sizeof(ACSM_PATTERN3), ACSM3_MEMORY_TYPE__PATTERN);
 
-    plist->patrn = (uint8_t*)AC_MALLOC(n);
+    plist->patrn = (uint8_t*)AC_MALLOC(n,ACSM3_MEMORY_TYPE__PATTERN);
 
     ConvertCaseEx(plist->patrn, pat, n);
 
-    plist->casepatrn = (uint8_t*)AC_MALLOC(n);
+    plist->casepatrn = (uint8_t*)AC_MALLOC(n, ACSM3_MEMORY_TYPE__PATTERN);
 
     memcpy(plist->casepatrn, pat, n);
 
@@ -647,8 +694,8 @@ static inline int _acsmCompile3(ACSM_STRUCT3 *acsm)
 
     acsm->acsmMaxStates++;
 
-    acsm->acsmTransTable = (trans_node_t**)AC_MALLOC(sizeof(trans_node_t*) *acsm->acsmMaxStates);
-    acsm->acsmMatchList = (ACSM_PATTERN3**)AC_MALLOC(sizeof(ACSM_PATTERN3*) *acsm->acsmMaxStates);
+    acsm->acsmTransTable = (trans_node_t**)AC_MALLOC(sizeof(trans_node_t*) *acsm->acsmMaxStates, ACSM3_MEMORY_TYPE__TRANSTABLE);
+    acsm->acsmMatchList = (ACSM_PATTERN3**)AC_MALLOC(sizeof(ACSM_PATTERN3*) *acsm->acsmMaxStates, ACSM3_MEMORY_TYPE__MATCHLIST);
 
     acsm->acsmNumStates = 0;
 
@@ -684,7 +731,7 @@ static inline int _acsmCompile3(ACSM_STRUCT3 *acsm)
         acsm->sizeofstate = 4;
     }
 
-    acsm->acsmFailState = (acstate_t*)AC_MALLOC(sizeof(acstate_t) *acsm->acsmNumStates);
+    acsm->acsmFailState = (acstate_t*)AC_MALLOC(sizeof(acstate_t) *acsm->acsmNumStates, ACSM3_MEMORY_TYPE__FAILSTATE);
 
     acsm->acsmNextState = (acstate_t**)AC_MALLOC_DFA(sizeof(acstate_t*) *acsm->acsmNumStates, acsm->sizeofstate);
 
@@ -692,7 +739,7 @@ static inline int _acsmCompile3(ACSM_STRUCT3 *acsm)
     
     Convert_NFA_To_DFA(acsm);
     
-    AC_FREE(acsm->acsmFailState, sizeof(acstate_t) *acsm->acsmNumStates);
+    AC_FREE(acsm->acsmFailState, sizeof(acstate_t) *acsm->acsmNumStates, ACSM3_MEMORY_TYPE__FAILSTATE);
 
     acsm->acsmFailState = nullptr;
 
@@ -847,7 +894,7 @@ void acsmFree3(ACSM_STRUCT3 *acsm)
                 acsm->agent->list_free(&(ilist->neg_list));
             }
 
-            AC_FREE(ilist, 0);
+            AC_FREE(ilist, 0, ACSM3_MEMORY_TYPE__NONE);
         }
 
         AC_FREE_DFA(acsm->acsmNextState[i], 0, 0);
@@ -861,17 +908,17 @@ void acsmFree3(ACSM_STRUCT3 *acsm)
             acsm->agent->user_free(plist->udata);
         }
 
-        AC_FREE(plist->patrn, 0);
-        AC_FREE(plist->casepatrn,0 );
-        AC_FREE(plist, 0);
+        AC_FREE(plist->patrn, 0, ACSM3_MEMORY_TYPE__NONE);
+        AC_FREE(plist->casepatrn, 0, ACSM3_MEMORY_TYPE__NONE);
+        AC_FREE(plist, 0, ACSM3_MEMORY_TYPE__NONE);
 
         plist = tmpPlist;
     }
 
     AC_FREE_DFA(acsm->acsmNextState, 0, 0);
-    AC_FREE(acsm->acsmFailState, 0);
-    AC_FREE(acsm->acsmMatchList, 0);
-    AC_FREE(acsm, 0);
+    AC_FREE(acsm->acsmFailState, 0, ACSM3_MEMORY_TYPE__NONE);
+    AC_FREE(acsm->acsmMatchList, 0, ACSM3_MEMORY_TYPE__NONE);
+    AC_FREE(acsm, 0, ACSM3_MEMORY_TYPE__NONE);
 }
 
 int acsmPatternCount3(ACSM_STRUCT3 *acsm)
