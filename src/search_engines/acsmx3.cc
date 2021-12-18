@@ -766,24 +766,6 @@ int acsmCompile3(SnortConfig *sc, ACSM_STRUCT3 *acsm)
     return 0;
 }
 
-static inline acstate_t get_next_state_nfa(acstate_t *ps, acstate_t state, unsigned input)
-{   
-    ps++;
-
-    if (ps[input] == 0) 
-    {
-        if (state != 0)
-        {
-            return ACSM_FAIL_STATE3;
-        }
-    }
-    else 
-    {
-        return ps[input];
-    }
-    return 0;
-}
-
 #define AC_SEARCH_ALL \
     for (; T < Tend; T++) \
     { \
@@ -794,7 +776,7 @@ static inline acstate_t get_next_state_nfa(acstate_t *ps, acstate_t state, unsig
             for (mlist = MatchList[state]; mlist != nullptr; mlist = mlist->next) \
             { \
                 index = T - Tx; \
-                if (mlist->nocase || (memcmp(mlist->casepatrn, T - mlist->n, mlist->n) == 0)) \
+                if (mlist->nocase) \
                 { \
                     nfound++; \
                     if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0) \
@@ -856,7 +838,7 @@ int acsm_search_dfa_gpu(
     for (mlist = MatchList[state]; mlist != nullptr; mlist = mlist->next)
     {
         index = T - Tx;
-        if (mlist->nocase || (memcmp(mlist->casepatrn, T - mlist->n, mlist->n) == 0))
+        if (mlist->nocase)
         {
             nfound++;
             if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
