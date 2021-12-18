@@ -29,9 +29,9 @@ using namespace snort;
 #define ARPSPOOF_UNICAST_ARP_REQUEST_STR \
     "unicast ARP request"
 #define ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC_STR \
-    "ethernet/ARP mismatch request for source"
+    "ethernet/ARP mismatch for source hardware address"
 #define ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST_STR \
-    "ethernet/ARP mismatch request for destination"
+    "ethernet/ARP mismatch for destination hardware address in reply"
 #define ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK_STR \
     "attempted ARP cache overwrite attack"
 
@@ -99,9 +99,6 @@ bool ArpSpoofModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("mac") )
         v.get_mac(host.mac_addr);
-
-    else
-        return false;
 
     return true;
 }
