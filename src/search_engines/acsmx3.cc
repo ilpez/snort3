@@ -246,7 +246,7 @@ static int List_GetNextState2(
     return 0;
 }
 
-static int List_putNextStateOpt(
+static int List_PutNextStateOpt(
     ACSM_STRUCT3 *acsm, trans_node_t **acsmTransTableOpt,
     int state, int input, int next_state)
 {
@@ -274,7 +274,7 @@ static int List_putNextStateOpt(
     return 0;
 }
 
-static int List_putNextState(
+static int List_PutNextState(
     ACSM_STRUCT3 *acsm, int state, int input, int next_state)
 {
     trans_node_t *p;
@@ -404,7 +404,7 @@ static void AddPatternStates(ACSM_STRUCT3 *acsm, ACSM_PATTERN3 *p)
     for (; n > 0; pattern++, n--)
     {
         acsm->acsmNumStates++;
-        List_putNextState(acsm, state, *pattern, acsm->acsmNumStates);
+        List_PutNextState(acsm, state, *pattern, acsm->acsmNumStates);
         state = acsm->acsmNumStates;
     }
 
@@ -530,7 +530,7 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT3 *acsm)
 
                 if ((acstate_t)cFailState != ACSM_FAIL_STATE3 && cFailState != 0)
                 {
-                    List_putNextStateOpt(acsm, acsmTransTableOpt, r, i, cFailState);
+                    List_PutNextStateOpt(acsm, acsmTransTableOpt, r, i, cFailState);
                 }
             }
         }
