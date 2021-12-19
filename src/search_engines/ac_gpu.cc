@@ -28,7 +28,7 @@ public:
 
     void set_opt(int flag) override
     {
-        acsmCompressStates(obj, flag);
+        acsmCompressStates(obj, 0);
     }
 
     int add_pattern(
