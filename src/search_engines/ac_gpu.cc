@@ -12,15 +12,15 @@ using namespace snort;
 
 class AcgMpse : public Mpse
 {
-    private:
+private:
     ACSM_STRUCT3 *obj;
 
-    public:
+public:
     AcgMpse(const MpseAgent *agent) : Mpse("ac_gpu")
     {
         obj = acsmNew3(agent);
     }
-    
+
     ~AcgMpse() override
     {
         acsmFree3(obj);
@@ -33,8 +33,7 @@ class AcgMpse : public Mpse
 
     int add_pattern(
         const uint8_t *P, unsigned m,
-        const PatternDescriptor &desc, void *user
-    ) override
+        const PatternDescriptor &desc, void *user) override
     {
         return acsmAddPattern3(obj, P, m, desc.no_case, desc.negated, user);
     }
@@ -45,15 +44,13 @@ class AcgMpse : public Mpse
     }
 
     int _search(
-        const uint8_t *T, int n, MpseMatch match, void *context, int *current_state
-    ) override
+        const uint8_t *T, int n, MpseMatch match, void *context, int *current_state) override
     {
         return acsm_search_dfa_gpu(obj, T, n, match, context, current_state);
     }
 
     int search_all(
-        const uint8_t *T, int n, MpseMatch match, void *context, int *current_state
-    ) override
+        const uint8_t *T, int n, MpseMatch match, void *context, int *current_state) override
     {
         return acsm_search_dfa_gpu(obj, T, n, match, context, current_state);
     }
@@ -72,8 +69,7 @@ class AcgMpse : public Mpse
 // api
 
 static Mpse *acg_ctor(
-    const SnortConfig*, class Module*, const MpseAgent *agent
-)
+    const SnortConfig *, class Module *, const MpseAgent *agent)
 {
     return new AcgMpse(agent);
 }
@@ -95,33 +91,30 @@ static void acg_print()
 }
 
 static const MpseApi acg_api =
-{
     {
-        PT_SEARCH_ENGINE,
-        sizeof(MpseApi),
-        SEAPI_VERSION,
-        0,
-        API_RESERVED,
-        API_OPTIONS,
-        "ac_gpu",
-        "Aho_Corasick Full on GPU with OpenCL",
+        {PT_SEARCH_ENGINE,
+         sizeof(MpseApi),
+         SEAPI_VERSION,
+         0,
+         API_RESERVED,
+         API_OPTIONS,
+         "ac_gpu",
+         "Aho_Corasick Full on GPU with OpenCL",
+         nullptr,
+         nullptr},
+        MPSE_BASE,
         nullptr,
-        nullptr
-    },
-    MPSE_BASE,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    acg_ctor,
-    acg_dtor,
-    acg_init,
-    acg_print,
-    nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        acg_ctor,
+        acg_dtor,
+        acg_init,
+        acg_print,
+        nullptr,
 };
 
 const BaseApi *se_ac_gpu[] =
-{
-    &acg_api.base,
-    nullptr
-};
+    {
+        &acg_api.base,
+        nullptr};

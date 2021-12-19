@@ -1,8 +1,11 @@
 #ifndef ACSMX3_H
-#define ACSMX3_H 
+#define ACSMX3_H
 
 #include <cstdint>
 #include "search_common.h"
+
+#define CL_HPP_TARGET_OPENCL_VERSION 200
+#include "CL/cl2.hpp"
 
 namespace snort
 {
@@ -53,7 +56,6 @@ struct ACSM_STRUCT3
 
     int sizeofstate;
     int compress_states;
-
 };
 /*
     Function Prototypes
@@ -61,30 +63,26 @@ struct ACSM_STRUCT3
 
 void acsmx3_init_xlatcase();
 
-ACSM_STRUCT3 *acsmNew3(const MpseAgent*);
+ACSM_STRUCT3 *acsmNew3(const MpseAgent *);
 
 int acsmAddPattern3(
     ACSM_STRUCT3 *p, const uint8_t *pat, unsigned n,
-    bool nocase, bool negative, void *id
-);
+    bool nocase, bool negative, void *id);
 
-int acsmCompile3(snort::SnortConfig*, ACSM_STRUCT3*);
+int acsmCompile3(snort::SnortConfig *, ACSM_STRUCT3 *);
 
 int acsm_search_dfa_gpu(
-    ACSM_STRUCT3*, const uint8_t *Tx, int n, MpseMatch,
-    void *context, int *current_state
-);
+    ACSM_STRUCT3 *, const uint8_t *Tx, int n, MpseMatch,
+    void *context, int *current_state);
 
-void acsmFree3(ACSM_STRUCT3*);
-int acsmPatternCount3(ACSM_STRUCT3*);
-void acsmCompressStates(ACSM_STRUCT3*, int);
+void acsmFree3(ACSM_STRUCT3 *);
+int acsmPatternCount3(ACSM_STRUCT3 *);
+void acsmCompressStates(ACSM_STRUCT3 *, int);
 
 void acsmPrintInfo3(ACSM_STRUCT3 *p);
 
-int acsmPrintDetailInfo3(ACSM_STRUCT3*);
+int acsmPrintDetailInfo3(ACSM_STRUCT3 *);
 int acsmPrintSummaryInfo3();
 void acsm3_init_summary();
-
-
 
 #endif
