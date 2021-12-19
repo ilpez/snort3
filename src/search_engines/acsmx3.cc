@@ -771,28 +771,27 @@ int acsmCompile3(SnortConfig *sc, ACSM_STRUCT3 *acsm)
     return 0;
 }
 
-#define AC_SEARCH_ALL                                                                                      \
-    for (; T < Tend; T++)                                                                                  \
-    {                                                                                                      \
-        ps = NextState[state];                                                                             \
-        sindex = xlatcase[T[0]];                                                                           \
-        if (ps[1])                                                                                         \
-        {                                                                                                  \
-            for (mlist = MatchList[state]; mlist != nullptr; mlist = mlist->next)                          \
-            {                                                                                              \
-                index = T - Tx;                                                                            \
-                if (mlist->nocase)                                                                         \
-                {                                                                                          \
-                    nfound++;                                                                              \
-                    if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0) \
-                    {                                                                                      \
-                        *current_state = state;                                                            \
-                        return nfound;                                                                     \
-                    }                                                                                      \
-                }                                                                                          \
-            }                                                                                              \
-        }                                                                                                  \
-        state = ps[2u + sindex];                                                                           \
+#define AC_SEARCH                                                                \
+    for (; T < Tend; T++)                                                        \
+    {                                                                            \
+        ps = NextState[state];                                                   \
+        sindex = xlatcase[T[0]];                                                 \
+        if (ps[1])                                                               \
+        {                                                                        \
+            mlist = MatchList[state];                                            \
+            if (mlist)                                                           \
+            {                                                                    \
+                index = T - Tx;                                                  \
+                nfound++;                                                        \
+                if (match(mlist->udata, mlist->rule_option_tree, index, context, \
+                          mlist->neg_list) > 0)                                  \
+                {                                                                \
+                    *current_state = state;                                      \
+                    return nfound;                                               \
+                }                                                                \
+            }                                                                    \
+        }                                                                        \
+        state = ps[2u + sindex];                                                 \
     }
 
 int acsm_search_dfa_gpu(
@@ -821,36 +820,34 @@ int acsm_search_dfa_gpu(
     {
         uint8_t *ps;
         uint8_t **NextState = (uint8_t **)acsm->acsmNextState;
-        AC_SEARCH_ALL
+        AC_SEARCH
     }
     break;
     case 2:
     {
         uint16_t *ps;
         uint16_t **NextState = (uint16_t **)acsm->acsmNextState;
-        AC_SEARCH_ALL
+        AC_SEARCH
     }
     break;
     default:
     {
         acstate_t *ps;
         acstate_t **NextState = acsm->acsmNextState;
-        AC_SEARCH_ALL
+        AC_SEARCH
     }
     break;
     }
 
-    for (mlist = MatchList[state]; mlist != nullptr; mlist = mlist->next)
+    mlist = MatchList[state];
+    if (mlist)
     {
         index = T - Tx;
-        if (mlist->nocase)
+        nfound++;
+        if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
         {
-            nfound++;
-            if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
-            {
-                *current_state = state;
-                return nfound;
-            }
+            *current_state = state;
+            return nfound;
         }
     }
 
