@@ -586,6 +586,64 @@ ACSM_STRUCT3 *acsmNew3(const MpseAgent *agent)
     {
         p->agent = agent;
         p->acsmAlphabetSize = 256;
+
+        // OpenCL Context Creation
+        std::vector<cl::Platform> platforms;
+        std::vector<cl::Device> devices;
+        cl::Platform::get(&platforms);
+        // if (platforms.size() == 0)
+        // {
+        //     printf("Error, no OpenCL Platform \n");
+        // }
+        // else
+        // {
+        //     std::cout << platforms.front().getInfo<CL_PLATFORM_NAME>() << std::endl;
+        // }
+        p->platform = platforms.front();
+        p->platform.getDevices(CL_DEVICE_TYPE_GPU, &devices);
+        // if (devices.size() == 0) {
+        //     printf("Error, no OpenCL Device \n");
+        // }
+        // else
+        // {
+        //     std::cout << devices.front().getInfo<CL_DEVICE_NAME>() << std::endl;
+        // }
+        p->device = devices.front();
+        p->context = cl::Context(p->device);
+
+        // OpenCL Kernel Creation
+        std::ifstream kernel_file("ac_gpu.cl");
+        std::string kernel_code(std::istreambuf_iterator<char>(kernel_file), (std::istreambuf_iterator<char>()));
+        p->source.push_back({kernel_code.c_str(), kernel_code.length()});
+
+        p->program = cl::Program(p->context, p->source, &p->err);
+
+        if (p->err != CL_SUCCESS)
+        {
+            printf("Error building : %i \n", p->err);
+        }
+        p->err = p->program.build("-cl-std=CL2.0");
+
+        auto status = p->program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>();
+
+        if (p->err != CL_SUCCESS)
+        {
+            printf("Error building : %i \n", p->err);
+        }
+
+        p->kernel = cl::Kernel(p->program, "ac_gpu", &p->err);
+
+        if (p->err != CL_SUCCESS)
+        {
+            printf("Error building : %i \n", p->err);
+        }
+
+        p->queue = cl::CommandQueue(p->context, p->device, p->err);
+
+        if (p->err != CL_SUCCESS)
+        {
+            printf("Error building : %i \n", p->err);
+        }
     }
 
     return p;
@@ -768,6 +826,35 @@ int acsmCompile3(SnortConfig *sc, ACSM_STRUCT3 *acsm)
     if (acsm->agent)
         acsmBuildMatchStateTrees3(sc, acsm);
 
+    // acsm->cl_Tx = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(uint8_t *));
+
+    // acsm->cl_Tend = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(uint8_t *));
+
+    // acsm->cl_acsmMatchList = (ACSM_PATTERN3 **)cl::SVMAllocator();
+
+    // acsm->cl_acsmNextState = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(acstate_t *));
+
+    // acsm->cl_currentState = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(acstate_t));
+    acstate_t *p;
+    acstate_t **NexState = acsm->acsmNextState;
+    acsm->stateArray = new int[acsm->acsmNumStates * 258];
+
+    for (int i = 0; i < acsm->acsmNumStates; i++)
+    {
+        p = NexState[i];
+        if (!p)
+            continue;
+
+        for (int j = 0; j < 258; j++)
+        {
+            acsm->stateArray[(i * 258) + j] = p[j];
+        }
+    }
+
+    acsm->cl_stateTable = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(int) * acsm->acsmNumStates * 258, acsm->stateArray);
+    acsm->cl_xlatcase = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(uint8_t) * acsm->acsmAlphabetSize, xlatcase);
+    acsm->cl_result = cl::Buffer(acsm->context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, sizeof(int) * MAX_PACKET_SIZE);
+
     return 0;
 }
 
@@ -799,59 +886,55 @@ int acsm_search_dfa_gpu(
     void *context, int *current_state)
 {
     ACSM_PATTERN3 *mlist;
-    const uint8_t *Tend;
-    const uint8_t *T;
-    int index;
-    int sindex;
     int nfound = 0;
     acstate_t state;
     ACSM_PATTERN3 **MatchList = acsm->acsmMatchList;
-
-    T = Tx;
-    Tend = Tx + n;
 
     if (current_state == nullptr)
         return 0;
 
     state = *current_state;
-    switch (acsm->sizeofstate)
-    {
-    case 1:
-    {
-        uint8_t *ps;
-        uint8_t **NextState = (uint8_t **)acsm->acsmNextState;
-        AC_SEARCH
-    }
-    break;
-    case 2:
-    {
-        uint16_t *ps;
-        uint16_t **NextState = (uint16_t **)acsm->acsmNextState;
-        AC_SEARCH
-    }
-    break;
-    default:
-    {
-        acstate_t *ps;
-        acstate_t **NextState = acsm->acsmNextState;
-        AC_SEARCH
-    }
-    break;
-    }
 
-    mlist = MatchList[state];
-    if (mlist)
+    int resultArray[n];
+    acsm->cl_Tx = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR, sizeof(uint8_t) * MAX_PACKET_SIZE, &Tx);
+    acsm->cl_n = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR, sizeof(int), &n);
+
+    // acsm->queue.enqueueWriteBuffer(acsm->cl_Tx, CL_FALSE, 0, sizeof(uint8_t) * n, Tx);
+    // acsm->queue.enqueueWriteBuffer(acsm->cl_n, CL_TRUE, 0, sizeof(int), &n);
+
+    acsm->kernel.setArg(0, acsm->cl_stateTable);
+    acsm->kernel.setArg(1, acsm->cl_xlatcase);
+    acsm->kernel.setArg(2, acsm->cl_Tx);
+    acsm->kernel.setArg(3, acsm->cl_n);
+    acsm->kernel.setArg(4, acsm->cl_result);
+
+    // AC_SEARCH
+    acsm->queue.enqueueNDRangeKernel(acsm->kernel, cl::NullRange, cl::NDRange(1), cl::NDRange(1));
+    acsm->queue.enqueueReadBuffer(acsm->cl_result, CL_TRUE, 0, sizeof(int) * n, resultArray);
+    if (resultArray[0])
     {
-        index = T - Tx;
-        nfound++;
-        if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
+        nfound = 0;
+        for (int i = 1; i < n && nfound < resultArray[0]; i++)
         {
-            *current_state = state;
-            return nfound;
+            if (resultArray[i])
+            {
+                nfound++;
+                mlist = MatchList[resultArray[i]];
+                if (mlist)
+                {
+                    if (match(mlist->udata, mlist->rule_option_tree, i, context, mlist->neg_list) > 0)
+                    {
+                        *current_state = resultArray[i];
+                        return nfound;
+                    }
+                }
+            }
         }
     }
+    if (!n)
+        acsm->queue.finish();
 
-    *current_state = state;
+    acsm->queue.flush();
     return nfound;
 }
 

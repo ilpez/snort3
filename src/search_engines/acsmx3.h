@@ -5,7 +5,11 @@
 #include "search_common.h"
 
 #define CL_HPP_TARGET_OPENCL_VERSION 200
+#define CL_HPP_ENABLE_EXCEPTIONS
 #include "CL/cl2.hpp"
+#include <vector>
+#include <fstream>
+#include <iostream>
 
 namespace snort
 {
@@ -14,6 +18,8 @@ namespace snort
 
 typedef unsigned int acstate_t;
 #define ACSM_FAIL_STATE3 0xffffffff
+
+#define MAX_PACKET_SIZE 64*1024
 
 struct ACSM_PATTERN3
 {
@@ -56,6 +62,34 @@ struct ACSM_STRUCT3
 
     int sizeofstate;
     int compress_states;
+
+    cl_int err;
+
+    // OpenCL Device Constructor
+    cl::Platform platform;
+    cl::Device device;
+
+    // OpenCL Kernel Constructor
+    cl::Context context;
+    cl::Program::Sources source;
+    cl::Program program;
+
+    // OpenCL Kernel Execution
+    cl::Kernel kernel;
+    cl::CommandQueue queue;
+
+    // OpenCL Shared Memory Buffer
+    // ACSM_PATTERN3 **cl_acsmMatchList;
+    int *stateArray;
+
+    // OpenCL Input Buffer
+    cl::Buffer cl_stateTable; // acstate_t *
+    cl::Buffer cl_xlatcase; // uint8_t x 256
+    cl::Buffer cl_Tx;   // uint8_t *
+    cl::Buffer cl_n;    // int
+
+    // OpenCL Output Buffer
+    cl::Buffer cl_result;
 };
 /*
     Function Prototypes
