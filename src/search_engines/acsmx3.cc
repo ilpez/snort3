@@ -853,7 +853,6 @@ int acsmCompile3(SnortConfig *sc, ACSM_STRUCT3 *acsm)
 
     acsm->cl_stateTable = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(int) * acsm->acsmNumStates * 258, acsm->stateArray);
     acsm->cl_xlatcase = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(uint8_t) * acsm->acsmAlphabetSize, xlatcase);
-    acsm->cl_result = cl::Buffer(acsm->context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, sizeof(int) * MAX_PACKET_SIZE);
 
     return 0;
 }
@@ -896,8 +895,11 @@ int acsm_search_dfa_gpu(
     state = *current_state;
 
     int resultArray[n];
+
     acsm->cl_Tx = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR, sizeof(uint8_t) * MAX_PACKET_SIZE, &Tx);
     acsm->cl_n = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR, sizeof(int), &n);
+
+    acsm->cl_result = cl::Buffer(acsm->context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, sizeof(int) * n);
 
     // acsm->queue.enqueueWriteBuffer(acsm->cl_Tx, CL_FALSE, 0, sizeof(uint8_t) * n, Tx);
     // acsm->queue.enqueueWriteBuffer(acsm->cl_n, CL_TRUE, 0, sizeof(int), &n);
@@ -910,7 +912,11 @@ int acsm_search_dfa_gpu(
 
     // AC_SEARCH
     acsm->queue.enqueueNDRangeKernel(acsm->kernel, cl::NullRange, cl::NDRange(1), cl::NDRange(1));
+
+    acsm->queue.finish();
+
     acsm->queue.enqueueReadBuffer(acsm->cl_result, CL_TRUE, 0, sizeof(int) * n, resultArray);
+
     if (resultArray[0])
     {
         nfound = 0;
@@ -931,10 +937,6 @@ int acsm_search_dfa_gpu(
             }
         }
     }
-    if (!n)
-        acsm->queue.finish();
-
-    acsm->queue.flush();
     return nfound;
 }
 
