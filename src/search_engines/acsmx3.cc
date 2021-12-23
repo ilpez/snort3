@@ -826,15 +826,6 @@ int acsmCompile3(SnortConfig *sc, ACSM_STRUCT3 *acsm)
     if (acsm->agent)
         acsmBuildMatchStateTrees3(sc, acsm);
 
-    // acsm->cl_Tx = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(uint8_t *));
-
-    // acsm->cl_Tend = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(uint8_t *));
-
-    // acsm->cl_acsmMatchList = (ACSM_PATTERN3 **)cl::SVMAllocator();
-
-    // acsm->cl_acsmNextState = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(acstate_t *));
-
-    // acsm->cl_currentState = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(acstate_t));
     acstate_t *p;
     acstate_t **NexState = acsm->acsmNextState;
     acsm->stateArray = new int[acsm->acsmNumStates * 258];
@@ -854,6 +845,8 @@ int acsmCompile3(SnortConfig *sc, ACSM_STRUCT3 *acsm)
     acsm->cl_stateTable = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(int) * acsm->acsmNumStates * 258, acsm->stateArray);
     acsm->cl_xlatcase = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(uint8_t) * acsm->acsmAlphabetSize, xlatcase);
 
+    acsm->cl_result = cl::Buffer(acsm->context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, sizeof(int) * MAX_PACKET_SIZE);
+    
     return 0;
 }
 
@@ -894,15 +887,11 @@ int acsm_search_dfa_gpu(
 
     state = *current_state;
 
-    int resultArray[n];
+    // int resultArray[n];
+    int *resultArray;
 
-    acsm->cl_Tx = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR, sizeof(uint8_t) * MAX_PACKET_SIZE, &Tx);
+    acsm->cl_Tx = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR, sizeof(uint8_t) * n, &Tx);
     acsm->cl_n = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR, sizeof(int), &n);
-
-    acsm->cl_result = cl::Buffer(acsm->context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, sizeof(int) * n);
-
-    // acsm->queue.enqueueWriteBuffer(acsm->cl_Tx, CL_FALSE, 0, sizeof(uint8_t) * n, Tx);
-    // acsm->queue.enqueueWriteBuffer(acsm->cl_n, CL_TRUE, 0, sizeof(int), &n);
 
     acsm->kernel.setArg(0, acsm->cl_stateTable);
     acsm->kernel.setArg(1, acsm->cl_xlatcase);
@@ -910,12 +899,11 @@ int acsm_search_dfa_gpu(
     acsm->kernel.setArg(3, acsm->cl_n);
     acsm->kernel.setArg(4, acsm->cl_result);
 
-    // AC_SEARCH
     acsm->queue.enqueueNDRangeKernel(acsm->kernel, cl::NullRange, cl::NDRange(1), cl::NDRange(1));
 
     acsm->queue.finish();
 
-    acsm->queue.enqueueReadBuffer(acsm->cl_result, CL_TRUE, 0, sizeof(int) * n, resultArray);
+    resultArray = (int *)acsm->queue.enqueueMapBuffer(acsm->cl_result, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * n);
 
     if (resultArray[0])
     {
@@ -924,19 +912,24 @@ int acsm_search_dfa_gpu(
         {
             if (resultArray[i])
             {
-                nfound++;
-                mlist = MatchList[resultArray[i]];
-                if (mlist)
+                for (mlist = MatchList[resultArray[i]];
+                     mlist != nullptr;
+                     mlist = mlist->next)
                 {
-                    if (match(mlist->udata, mlist->rule_option_tree, i, context, mlist->neg_list) > 0)
+                    if (mlist->nocase)
                     {
-                        *current_state = resultArray[i];
-                        return nfound;
+                        nfound++;
+                        if (match(mlist->udata, mlist->rule_option_tree, i, context, mlist->neg_list) > 0)
+                        {
+                            *current_state = resultArray[i];
+                            return nfound;
+                        }
                     }
                 }
             }
         }
     }
+    acsm->queue.enqueueUnmapMemObject(acsm->cl_result, resultArray);
     return nfound;
 }
 
