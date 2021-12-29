@@ -342,19 +342,7 @@ static inline int List_ConvToFull(
 
     while (t != nullptr)
     {
-        switch (acsm->sizeofstate)
-        {
-        case 1:
-            *((uint8_t *)full + t->key) = (uint8_t)t->next_state;
-            break;
-        case 2:
-            *((uint16_t *)full + t->key) = (uint16_t)t->next_state;
-            break;
-        default:
-            full[t->key] = t->next_state;
-            break;
-        }
-
+        full[t->key] = t->next_state;
         tcnt++;
         t = t->next;
     }
@@ -383,6 +371,8 @@ static void AddMatchListEntry(
     p->next = acsm->acsmMatchList[state];
 
     acsm->acsmMatchList[state] = p;
+
+    // acsm->matchArray[state] = *p;
 }
 
 static void AddPatternStates(ACSM_STRUCT3 *acsm, ACSM_PATTERN3 *p)
@@ -553,24 +543,9 @@ static int Conv_List_To_Full(ACSM_STRUCT3 *acsm)
         if (p == nullptr)
             return -1;
 
-        switch (acsm->sizeofstate)
-        {
-        case 1:
-            List_ConvToFull(acsm, k, (acstate_t *)((uint8_t *)p + 2));
-            *((uint8_t *)p) = 0;
-            *((uint8_t *)p + 1) = 0;
-            break;
-        case 2:
-            List_ConvToFull(acsm, k, (acstate_t *)((uint16_t *)p + 2));
-            *((uint16_t *)p) = 0;
-            *((uint16_t *)p + 1) = 0;
-            break;
-        default:
-            List_ConvToFull(acsm, k, (p + 2));
-            p[0] = 0;
-            p[1] = 0;
-            break;
-        }
+        List_ConvToFull(acsm, k, (p + 2));
+        p[0] = 0;
+        p[1] = 0;
 
         NextState[k] = p;
     }
@@ -624,11 +599,11 @@ ACSM_STRUCT3 *acsmNew3(const MpseAgent *agent)
         }
         p->err = p->program.build("-cl-std=CL2.0");
 
-        auto status = p->program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>();
+        // auto status = p->program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>();
 
         if (p->err != CL_SUCCESS)
         {
-            printf("Error building : %i \n", p->err);
+            std::cout << p->program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(p->device) << std::endl;
         }
 
         p->kernel = cl::Kernel(p->program, "ac_gpu", &p->err);
@@ -644,6 +619,20 @@ ACSM_STRUCT3 *acsmNew3(const MpseAgent *agent)
         {
             printf("Error building : %i \n", p->err);
         }
+
+        p->cl_Tx = cl::Buffer(p->context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(uint8_t) * MAX_PACKET_SIZE * BUFFER_SIZE);
+
+        p->cl_n = cl::Buffer(p->context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(int) * BUFFER_SIZE);
+
+        p->cl_result = cl::Buffer(p->context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, sizeof(int) * MAX_PACKET_SIZE * BUFFER_SIZE);
+
+        p->packet_buffer = (uint8_t *)p->queue.enqueueMapBuffer(p->cl_Tx, CL_TRUE, CL_MAP_WRITE, 0, sizeof(uint8_t) * MAX_PACKET_SIZE * BUFFER_SIZE);
+
+        p->packet_length_buffer = (int *)p->queue.enqueueMapBuffer(p->cl_n, CL_TRUE, CL_MAP_WRITE, 0, sizeof(int) * BUFFER_SIZE);
+
+        p->buffer_index = 0;
+
+        memset(p->packet_length_buffer, 0, sizeof(int) * BUFFER_SIZE);
     }
 
     return p;
@@ -689,18 +678,7 @@ static void acsmUpdateMatchStates(ACSM_STRUCT3 *acsm)
 
         if (Matchlist[state])
         {
-            switch (acsm->sizeofstate)
-            {
-            case 1:
-                *((uint8_t *)p + 1) = 1;
-                break;
-            case 2:
-                *((uint16_t *)p + 1) = 1;
-                break;
-            default:
-                p[1] = 1;
-                break;
-            }
+            p[1] = 1;
 
             summary.num_match_states++;
         }
@@ -756,6 +734,8 @@ static inline int _acsmCompile3(ACSM_STRUCT3 *acsm)
 
     acsm->acsmTransTable = (trans_node_t **)AC_MALLOC(sizeof(trans_node_t *) * acsm->acsmMaxStates, ACSM3_MEMORY_TYPE__TRANSTABLE);
     acsm->acsmMatchList = (ACSM_PATTERN3 **)AC_MALLOC(sizeof(ACSM_PATTERN3 *) * acsm->acsmMaxStates, ACSM3_MEMORY_TYPE__MATCHLIST);
+
+    // acsm->matchArray = (ACSM_PATTERN3 *)calloc(acsm->acsmMaxStates, sizeof(ACSM_PATTERN3));
 
     acsm->acsmNumStates = 0;
 
@@ -844,11 +824,37 @@ int acsmCompile3(SnortConfig *sc, ACSM_STRUCT3 *acsm)
 
     acsm->cl_stateTable = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(int) * acsm->acsmNumStates * 258, acsm->stateArray);
     acsm->cl_xlatcase = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(uint8_t) * acsm->acsmAlphabetSize, xlatcase);
+    // acsm->cl_matchTable = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(ACSM_PATTERN3) * acsm->acsmMaxStates, acsm->matchArray);
 
-    acsm->cl_result = cl::Buffer(acsm->context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, sizeof(int) * MAX_PACKET_SIZE);
-    
     return 0;
 }
+
+#define AC_SEARCH_ALL                                                                \
+    for (; T < Tend; T++)                                                            \
+    {                                                                                \
+        ps = NextState[state];                                                       \
+        sindex = xlatcase[T[0]];                                                     \
+        if (ps[1])                                                                   \
+        {                                                                            \
+            for (mlist = MatchList[state];                                           \
+                 mlist != nullptr;                                                   \
+                 mlist = mlist->next)                                                \
+            {                                                                        \
+                index = T - Tx;                                                      \
+                if ((memcmp(mlist->casepatrn, T - mlist->n, mlist->n) == 0))         \
+                {                                                                    \
+                    nfound++;                                                        \
+                    if (match(mlist->udata, mlist->rule_option_tree, index, context, \
+                              mlist->neg_list) > 0)                                  \
+                    {                                                                \
+                        *current_state = state;                                      \
+                        return nfound;                                               \
+                    }                                                                \
+                }                                                                    \
+            }                                                                        \
+        }                                                                            \
+        state = ps[2u + sindex];                                                     \
+    }
 
 #define AC_SEARCH                                                                \
     for (; T < Tend; T++)                                                        \
@@ -887,49 +893,118 @@ int acsm_search_dfa_gpu(
 
     state = *current_state;
 
+    // acstate_t *ps;
+    // acstate_t **NextState = acsm->acsmNextState;
+    // const uint8_t *T = Tx;
+    // const uint8_t *Tend = Tx + n;
+    // int index;
+    // int sindex;
+    // AC_SEARCH_ALL
+
+    /* Check the last state for a pattern match */
+    // mlist = MatchList[state];
+    // if (mlist)
+    // {
+    //     index = T - Tx;
+    //     nfound++;
+    //     if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
+    //     {
+    //         *current_state = state;
+    //         return nfound;
+    //     }
+    // }
+
+    // for (mlist = MatchList[state];
+    //      mlist != nullptr;
+    //      mlist = mlist->next)
+    // {
+    //     index = T - Tx;
+
+    //     if (mlist->nocase || (memcmp(mlist->casepatrn, T - mlist->n, mlist->n) == 0))
+    //     {
+    //         nfound++;
+    //         if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
+    //         {
+    //             *current_state = state;
+    //             return nfound;
+    //         }
+    //     }
+    // }
+
     // int resultArray[n];
-    int *resultArray;
+    // int *resultArray;
 
-    acsm->cl_Tx = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR, sizeof(uint8_t) * n, &Tx);
-    acsm->cl_n = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR, sizeof(int), &n);
+    // acsm->queue.enqueueWriteBuffer(acsm->cl_n, CL_FALSE, 0, sizeof(int), &n);
+    // acsm->queue.enqueueWriteBuffer(acsm->cl_Tx, CL_TRUE, 0, sizeof(uint8_t) * n, Tx);
+    // int packet_space = MAX_PACKET_SIZE * sizeof(uint8_t);
 
-    acsm->kernel.setArg(0, acsm->cl_stateTable);
-    acsm->kernel.setArg(1, acsm->cl_xlatcase);
-    acsm->kernel.setArg(2, acsm->cl_Tx);
-    acsm->kernel.setArg(3, acsm->cl_n);
-    acsm->kernel.setArg(4, acsm->cl_result);
-
-    acsm->queue.enqueueNDRangeKernel(acsm->kernel, cl::NullRange, cl::NDRange(1), cl::NDRange(1));
-
-    acsm->queue.finish();
-
-    resultArray = (int *)acsm->queue.enqueueMapBuffer(acsm->cl_result, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * n);
-
-    if (resultArray[0])
+    if (acsm->buffer_index < (BUFFER_SIZE - 1) && n > 0)
     {
-        nfound = 0;
-        for (int i = 1; i < n && nfound < resultArray[0]; i++)
+        memcpy(&(acsm->packet_buffer[acsm->buffer_index * n]), Tx, sizeof(uint8_t) * n);
+        acsm->packet_length_buffer[acsm->buffer_index] = n;
+        acsm->buffer_index++;
+        return 0;
+    }
+
+    memcpy(&(acsm->packet_buffer[acsm->buffer_index * n]), Tx, sizeof(uint8_t) * n);
+    acsm->packet_length_buffer[acsm->buffer_index] = n;
+    acsm->buffer_index++;
+
+    if (acsm->buffer_index == BUFFER_SIZE)
+    {
+        acsm->queue.enqueueUnmapMemObject(acsm->cl_Tx, acsm->packet_buffer);
+        acsm->queue.enqueueUnmapMemObject(acsm->cl_n, acsm->packet_length_buffer);
+
+        acsm->kernel.setArg(0, acsm->cl_stateTable);
+        acsm->kernel.setArg(1, acsm->cl_xlatcase);
+        acsm->kernel.setArg(2, acsm->cl_Tx);
+        acsm->kernel.setArg(3, acsm->cl_n);
+        acsm->kernel.setArg(4, acsm->cl_result);
+
+        acsm->queue.enqueueNDRangeKernel(acsm->kernel, cl::NullRange, cl::NDRange(BUFFER_SIZE), cl::NDRange(1));
+
+        // acsm->queue.finish();
+
+        int *resultArray = (int *)acsm->queue.enqueueMapBuffer(acsm->cl_result, CL_FALSE, CL_MAP_READ, 0, sizeof(int) * MAX_PACKET_SIZE * BUFFER_SIZE);
+
+        for (int k = 0; k < BUFFER_SIZE; k++)
         {
-            if (resultArray[i])
+            int nCL = acsm->packet_length_buffer[k];
+            uint8_t *tCL = acsm->packet_buffer + k * nCL;
+            for (int i = 1; i < nCL; i++)
             {
-                for (mlist = MatchList[resultArray[i]];
-                     mlist != nullptr;
-                     mlist = mlist->next)
+                state = resultArray[nCL * k + i];
+                for (mlist = MatchList[state]; mlist != nullptr; mlist = mlist->next)
                 {
-                    if (mlist->nocase)
+                    nfound++;
+                    if (mlist->nocase || (memcmp(mlist->casepatrn, tCL + i - mlist->n, mlist->n) == 0))
                     {
-                        nfound++;
                         if (match(mlist->udata, mlist->rule_option_tree, i, context, mlist->neg_list) > 0)
                         {
-                            *current_state = resultArray[i];
+                            *current_state = state;
                             return nfound;
                         }
                     }
                 }
+                // index = i;
+                // state = resultArray[i];
             }
         }
+        acsm->packet_buffer = (uint8_t *)acsm->queue.enqueueMapBuffer(acsm->cl_Tx, CL_TRUE, CL_MAP_WRITE, 0, sizeof(uint8_t) * MAX_PACKET_SIZE * BUFFER_SIZE);
+
+        acsm->packet_length_buffer = (int *)acsm->queue.enqueueMapBuffer(acsm->cl_n, CL_TRUE, CL_MAP_WRITE, 0, sizeof(int) * BUFFER_SIZE);
+
+        acsm->buffer_index = 0;
+
+        memset(acsm->packet_length_buffer, 0, sizeof(int) * BUFFER_SIZE);
+
+        acsm->queue.enqueueUnmapMemObject(acsm->cl_result, resultArray);
     }
-    acsm->queue.enqueueUnmapMemObject(acsm->cl_result, resultArray);
+
+    // std::cout << "nfound : " << nfound << std::endl;
+    // std::cout << "cl_found : " << resultArray[0] << std::endl;
+
+    // *current_state = state;
     return nfound;
 }
 
