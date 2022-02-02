@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2017-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2017-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -75,48 +75,36 @@ uint16_t FlushBucket::get_size()
 
 TEST_GROUP(atom_splitter) { };
 
-TEST(atom_splitter, t2x256)
+TEST(atom_splitter, search_search_flush)
 {
-    AtomSplitter s(true, 128);
+    AtomSplitter s(true, 16384);  // default TcpStreamConfig::paf_max
     uint32_t fp = 0;
 
-    CHECK(s.scan(nullptr, nullptr, 256, 0, &fp) == StreamSplitter::SEARCH);
+    // not enough segments, not enough bytes - search
+    CHECK(s.scan(nullptr, nullptr, 16000, 0, &fp) == StreamSplitter::SEARCH);
     CHECK(fp == 0);
 
-    CHECK(s.scan(nullptr, nullptr, 256, 0, &fp) == StreamSplitter::FLUSH);
-    CHECK(fp == 256);
+    // enough segments, not enough bytes - search
+    CHECK(s.scan(nullptr, nullptr, 300, 0, &fp) == StreamSplitter::SEARCH);
+    CHECK(fp == 0);
+
+    // enough segments and enough bytes - flush
+    CHECK(s.scan(nullptr, nullptr, 512, 0, &fp) == StreamSplitter::FLUSH);
+    CHECK(fp == 512);
 }
 
-TEST(atom_splitter, t3x64)
+TEST(atom_splitter, search_flush)
 {
-    AtomSplitter s(true, 128);
+    AtomSplitter s(true, 16384);  // default TcpStreamConfig::paf_max
     uint32_t fp = 0;
 
-    CHECK(s.scan(nullptr, nullptr, 64, 0, &fp) == StreamSplitter::SEARCH);
+    // not enough segments, enough bytes - search
+    CHECK(s.scan(nullptr, nullptr, 17000, 0, &fp) == StreamSplitter::SEARCH);
     CHECK(fp == 0);
 
-    CHECK(s.scan(nullptr, nullptr, 64, 0, &fp) == StreamSplitter::SEARCH);
-    CHECK(fp == 0);
-
-    CHECK(s.scan(nullptr, nullptr, 64, 0, &fp) == StreamSplitter::FLUSH);
-    CHECK(fp == 64);
-}
-
-TEST(atom_splitter, t3x256_with_update)
-{
-    AtomSplitter s(true, 128);
-    uint32_t fp = 0;
-
-    CHECK(s.scan(nullptr, nullptr, 256, 0, &fp) == StreamSplitter::SEARCH);
-    CHECK(fp == 0);
-
-    s.update();
-
-    CHECK(s.scan(nullptr, nullptr, 256, 0, &fp) == StreamSplitter::SEARCH);
-    CHECK(fp == 0);
-
-    CHECK(s.scan(nullptr, nullptr, 256, 0, &fp) == StreamSplitter::FLUSH);
-    CHECK(fp == 256);
+    // enough segments and enough bytes - flush
+    CHECK(s.scan(nullptr, nullptr, 10, 0, &fp) == StreamSplitter::FLUSH);
+    CHECK(fp == 10);
 }
 
 //--------------------------------------------------------------------------

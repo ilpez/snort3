@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -201,6 +201,9 @@ bool GtpTypeModule::set(const char*, Value& v, SnortConfig*)
 
         if ( tok[0] == '"' )
             tok.erase(0, 1);
+
+        if (tok.length() == 0)
+            continue;
 
         if ( tok[tok.length()-1] == '"' )
             tok.erase(tok.length()-1, 1);

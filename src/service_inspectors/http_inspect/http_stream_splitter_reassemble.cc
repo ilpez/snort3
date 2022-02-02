@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -276,7 +276,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         (session_data->section_type[source_id] == SEC__NOT_COMPUTE))
     {
         assert(session_data->type_expected[source_id] != SEC_ABORT);
-        // assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE); // FIXIT-M H2I
+        assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
         session_data->type_expected[source_id] = SEC_ABORT;
         return { nullptr, 0 };
     }

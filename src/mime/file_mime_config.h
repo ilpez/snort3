@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -63,6 +63,9 @@ public:
     void set_decompress_zip(bool);
     bool is_decompress_zip() const;
 
+    void set_decompress_vba(bool);
+    bool is_decompress_vba() const;
+
     void set_decompress_buffer_size(uint32_t);
     uint32_t get_decompress_buffer_size() const;
 
@@ -81,6 +84,7 @@ private:
     bool decompress_pdf = false;
     bool decompress_swf = false;
     bool decompress_zip = false;
+    bool decompress_vba = false;
     uint32_t decompress_buffer_size = DEFAULT_DECOMP;
     int64_t file_depth = MIN_DEPTH;
     bool decode_enabled = true;

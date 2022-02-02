@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -127,6 +127,7 @@ bool Http2Stream::is_open(HttpCommon::SourceId source_id)
     return (state[source_id] == STREAM_EXPECT_BODY) || (state[source_id] == STREAM_BODY);
 }
 
+// Caller must set session_data->stream_in_hi before calling this
 void Http2Stream::finish_msg_body(HttpCommon::SourceId source_id, bool expect_trailers,
     bool clear_partial_buffer)
 {

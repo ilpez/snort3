@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -93,7 +93,7 @@ struct OtnxMatchData
 int fpAddMatch(OtnxMatchData*, const OptTreeNode*);
 
 void fp_set_context(snort::IpsContext&);
-void fp_clear_context(snort::IpsContext&);
+void fp_clear_context(const snort::IpsContext&);
 
 void fp_full(snort::Packet*);
 void fp_partial(snort::Packet*);

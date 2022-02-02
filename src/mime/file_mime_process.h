@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -72,6 +72,8 @@ public:
     void set_data_state(int);
     MailLogState* get_log_state();
     void set_mime_stats(MimeStats*);
+
+    const BufferData& get_vba_inspect_buf();
 
 protected:
     MimeDecode* decode_state = nullptr;

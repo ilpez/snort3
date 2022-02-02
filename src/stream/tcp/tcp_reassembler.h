@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -86,7 +86,14 @@ protected:
     void purge_to_seq(TcpReassemblerState&, uint32_t flush_seq);
 
     bool next_no_gap(const TcpSegmentNode&);
+    bool next_no_gap_c(const TcpSegmentNode&);
+    bool next_acked_no_gap_c(const TcpSegmentNode&, const TcpReassemblerState&);
     void update_next(TcpReassemblerState&, const TcpSegmentNode&);
+    void update_skipped_bytes(uint32_t, TcpReassemblerState&);
+    bool has_seglist_hole(TcpReassemblerState&, TcpSegmentNode&, PAF_State&, uint32_t& total,
+        uint32_t& flags);
+    void skip_seglist_hole(TcpReassemblerState&, snort::Packet*, uint32_t flags,
+        int32_t flush_amt);
     uint32_t perform_partial_flush(TcpReassemblerState&, snort::Packet*, uint32_t flushed = 0);
 };
 

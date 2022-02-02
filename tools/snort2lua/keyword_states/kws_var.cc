@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -42,17 +42,18 @@ static bool var_convert(std::istringstream& data_stream, DataApi& data_api,
             " - " + keyword + " begins with a number!");
         return false;
     }
-    else if (ports.front() == '[')
+
+    size_t brace_pos = ports.find("[", 0, 1);
+    if (brace_pos != std::string::npos)
     {
         std::vector<std::string> port_list;
         bool retval = true;
 
-        // FIXIT-M should not be removing the '[' from a PORT_LIST
-        if (ports.front() == '[')
+        if (brace_pos == 0 && ports.back() == ']')
+        {
             ports.erase(ports.begin());
-
-        if (ports.back() == ']')
             ports.pop_back();
+        }
 
         util::split(ports, ',', port_list);
 

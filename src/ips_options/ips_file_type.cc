@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -156,6 +156,9 @@ bool FileTypeModule::set(const char*, Value& v, SnortConfig* sc)
     {
         if ( tok[0] == '"' )
             tok.erase(0, 1);
+
+        if (tok.length() == 0)
+            continue;	
 
         if ( tok[tok.length()-1] == '"' )
             tok.erase(tok.length()-1, 1);

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,26 +15,48 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-
-// appid_pegs.h author Silviu Minut <sminut@cisco.com>
-
-#ifndef APPID_PEGS_H
-#define APPID_PEGS_H
-
-#include "framework/counts.h"
-
-struct AppIdStats
-{
-    PegCount packets;
-    PegCount processed_packets;
-    PegCount ignored_packets;
-    PegCount total_sessions;
-    PegCount appid_unknown;
-    PegCount service_cache_prunes;
-    PegCount service_cache_adds;
-    PegCount service_cache_removes;
-    PegCount odp_reload_ignored_pkts;
-    PegCount tp_reload_ignored_pkts;
-};
-
+// buffer_data.cc author Amarnath Nayak <amarnaya@cisco.com>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
+
+#include "buffer_data.h"
+
+namespace snort
+{
+BufferData::BufferData(int32_t length, const uint8_t* data_, bool own_the_buffer_ = false) :
+            len(length), data(data_), own_the_buffer(own_the_buffer_){}
+
+BufferData::~BufferData() 
+{ 
+    if (own_the_buffer) 
+        delete[] data; 
+}
+
+int32_t BufferData::length() const
+{ 
+    return len;
+}
+
+const uint8_t* BufferData::data_ptr() const
+{ 
+    return data; 
+}
+
+void BufferData::set(int32_t length, const uint8_t* data_, bool own_the_buffer_)
+{
+    len = length; 
+    data = data_; 
+    own_the_buffer = own_the_buffer_; 
+}
+
+void BufferData::reset()
+{ 
+    if (own_the_buffer) 
+        delete[] data;
+
+    len = 0; 
+    data = nullptr; 
+    own_the_buffer = false; 
+}
+}

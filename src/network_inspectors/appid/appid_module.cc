@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -429,7 +429,6 @@ static const PegInfo appid_pegs[] =
     { CountType::SUM, "processed_packets", "count of packets processed" },
     { CountType::SUM, "ignored_packets", "count of packets ignored" },
     { CountType::SUM, "total_sessions", "count of sessions created" },
-    { CountType::SUM, "appid_unknown", "count of sessions where appid could not be determined" },
     { CountType::SUM, "service_cache_prunes", "number of times the service cache was pruned" },
     { CountType::SUM, "service_cache_adds", "number of times an entry was added to the service cache" },
     { CountType::SUM, "service_cache_removes", "number of times an item was removed from the service cache" },

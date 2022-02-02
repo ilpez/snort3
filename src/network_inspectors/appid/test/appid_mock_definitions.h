@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -63,7 +63,6 @@ SearchTool::~SearchTool() = default;
 DiscoveryFilter::~DiscoveryFilter(){}
 void ApplicationDescriptor::set_id(AppId app_id){ my_id = app_id;}
 void ServiceAppDescriptor::set_id(AppId app_id, OdpContext&){ set_id(app_id); }
-void ServiceAppDescriptor::update_stats(AppId, bool){}
 void ServiceAppDescriptor::set_port_service_id(AppId app_id){ port_service_id = app_id;}
 void ClientAppDescriptor::update_user(AppId app_id, const char* username, AppidChangeBits& change_bits)
 {
@@ -71,8 +70,6 @@ void ClientAppDescriptor::update_user(AppId app_id, const char* username, AppidC
     my_user_id = app_id;
     change_bits.set(APPID_USER_INFO_BIT);
 }
-void ClientAppDescriptor::update_stats(AppId, bool) {}
-void PayloadAppDescriptor::update_stats(AppId, bool) {}
 
 AppIdDiscovery::~AppIdDiscovery() = default;
 void ClientDiscovery::initialize(AppIdInspector&) { }

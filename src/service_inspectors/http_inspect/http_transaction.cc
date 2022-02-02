@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -141,7 +141,9 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
     // pipeline is empty check for a request transaction and take it. If there is no transaction
     // available then declare an underflow and create a new transaction specifically for the
     // response side.
-    else if (session_data->section_type[source_id] == SEC_STATUS)
+    else if (session_data->section_type[source_id] == SEC_STATUS ||
+	     (session_data->section_type[source_id] == SEC_HEADER &&
+	     session_data->version_id[source_id] == VERS_0_9))
     {
         delete_transaction(session_data->transaction[SRC_SERVER], session_data);
         if (session_data->pipeline_underflow)

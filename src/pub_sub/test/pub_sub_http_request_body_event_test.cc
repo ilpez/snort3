@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -56,7 +56,7 @@ void HttpMsgBody::do_file_processing(const Field&) {}
 void HttpMsgBody::do_utf_decoding(const Field&, Field&) {}
 void HttpMsgBody::do_file_decompression(const Field&, Field&) {}
 void HttpMsgBody::do_enhanced_js_normalization(const Field&, Field&) {}
-void HttpMsgBody::clean_partial(uint32_t&, uint32_t&, uint8_t*&, uint32_t&, int32_t) {}
+void HttpMsgBody::clean_partial(uint32_t&, uint32_t&, uint8_t*&, uint32_t&) {}
 void HttpMsgBody::bookkeeping_regular_flush(uint32_t&, uint8_t*&, uint32_t&, int32_t) {}
 #ifdef REG_TEST
 void HttpMsgBody::print_body_section(FILE*, const char*) {}
@@ -73,7 +73,7 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     trans_num(STAT_NOT_PRESENT),
     status_code_num(STAT_NOT_PRESENT),
     source_id(source_id_),
-    version_id(VERS__NO_SOURCE),
+    version_id(VERS__NOT_PRESENT),
     method_id(METH__NOT_PRESENT),
     tcp_close(false)
 {}

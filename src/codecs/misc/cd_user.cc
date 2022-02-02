@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -111,7 +111,7 @@ bool UserCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if ( pci->ip_proto )
     {
         set_ip(pci, codec, snort);
-        snort.set_pkt_type(PktType::PDU);
+        snort.set_pkt_type(PktType::USER);
     }
     else
     {

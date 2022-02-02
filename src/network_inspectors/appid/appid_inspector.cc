@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -44,7 +44,9 @@
 #include "appid_http2_req_body_event_handler.h"
 #include "appid_opportunistic_tls_event_handler.h"
 #include "appid_peg_counts.h"
+#include "appid_service_event_handler.h"
 #include "appid_session.h"
+#include "appid_ssh_event_handler.h"
 #include "appid_stats.h"
 #include "client_plugins/client_discovery.h"
 #include "detector_plugins/detector_pattern.h"
@@ -137,6 +139,10 @@ bool AppIdInspector::configure(SnortConfig* sc)
     DataBus::subscribe_network(OPPORTUNISTIC_TLS_EVENT, new AppIdOpportunisticTlsEventHandler());
 
     DataBus::subscribe_network(EFP_PROCESS_EVENT, new AppIdEfpProcessEventHandler());
+
+    DataBus::subscribe_network(SSH_EVENT, new SshEventHandler());
+
+    DataBus::subscribe_network(FLOW_NO_SERVICE_EVENT, new AppIdServiceEventHandler(*this));
 
     return true;
 }

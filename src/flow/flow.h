@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -264,7 +264,7 @@ public:
     { return (ssn_state.session_flags & SSNFLAG_PROXIED) != 0; }
 
     bool is_stream()
-    { return pkt_type == PktType::TCP or pkt_type == PktType::PDU; }
+    { return pkt_type == PktType::TCP or pkt_type == PktType::USER; }
 
     void block()
     { ssn_state.session_flags |= SSNFLAG_BLOCK; }
@@ -484,6 +484,7 @@ public:  // FIXIT-M privatize if possible
         bool data_decrypted : 1;    // indicate data in current flow is decrypted TLS application data
         bool snort_proto_id_set_by_ha : 1;
         bool efd_flow : 1;  // Indicate that current flow is an elephant flow
+        bool svc_event_generated : 1; // Set if FLOW_NO_SERVICE_EVENT was generated for this flow
     } flags;
 
     FlowState flow_state;

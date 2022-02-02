@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -62,6 +62,7 @@ static void map_app_names_to_snort_ids(SnortConfig* sc, AppIdConfig& config)
     config.snort_proto_ids[PROTO_INDEX_SUNRPC] = sc->proto_ref->add("sunrpc");
     config.snort_proto_ids[PROTO_INDEX_TFTP] = sc->proto_ref->add("tftp");
     config.snort_proto_ids[PROTO_INDEX_SIP] = sc->proto_ref->add("sip");
+    config.snort_proto_ids[PROTO_INDEX_SSH] = sc->proto_ref->add("ssh");
 }
 
 AppIdConfig::~AppIdConfig()
@@ -173,7 +174,6 @@ void OdpContext::initialize(AppIdInspector& inspector)
     sip_matchers.finalize_patterns(*this);
     ssl_matchers.finalize_patterns();
     dns_matchers.finalize_patterns();
-    ssh_matchers.finalize_patterns();
 }
 
 void OdpContext::reload()

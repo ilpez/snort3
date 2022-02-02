@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2005-2013 Sourcefire, Inc.
+// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,20 +15,37 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// buffer_data.h author Amarnath Nayak <amarnaya@cisco.com>
+#ifndef BUFFER_DATA_H
+#define BUFFER_DATA_H
 
-// client_app_ssh.h author Sourcefire Inc.
+#include <cstdint>
 
-#ifndef CLIENT_APP_SSH_H
-#define CLIENT_APP_SSH_H
+#include "main/snort_types.h"
 
-#include "client_plugins/client_detector.h"
-
-class SshClientDetector : public ClientDetector
+namespace snort
+{
+class SO_PUBLIC BufferData
 {
 public:
-    SshClientDetector(ClientDiscovery*);
+    BufferData(int32_t length, const uint8_t* data_, bool own_the_buffer_);
+    BufferData() = default;
 
-    int validate(AppIdDiscoveryArgs&) override;
+    ~BufferData();
+
+    int32_t length() const;
+    const uint8_t* data_ptr() const;
+
+    void set(int32_t length, const uint8_t* data_, bool own_the_buffer_);
+
+    void reset();
+
+    static const BufferData buffer_null;
+
+private:
+    int32_t len = 0;
+    const uint8_t* data = nullptr;
+    bool own_the_buffer = false;
 };
+}
 #endif
-

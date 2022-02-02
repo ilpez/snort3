@@ -13,18 +13,20 @@ endif ()
 set (HELPERS_INCLUDES
     ${HYPER_HEADERS}
     base64_encoder.h
+    buffer_data.h
     boyer_moore_search.h
     literal_search.h
     scratch_allocator.h
     json_stream.h
+    bitop.h
 )
 
 add_library (helpers OBJECT
     ${HELPERS_INCLUDES}
     ${HYPER_SOURCES}
     base64_encoder.cc
-    bitop.h
     boyer_moore_search.cc
+    buffer_data.cc
     chunk.cc
     chunk.h
     directory.cc

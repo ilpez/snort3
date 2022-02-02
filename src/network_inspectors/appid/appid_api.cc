@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -255,9 +255,12 @@ bool AppIdApi::is_inspection_needed(const Inspector& inspector) const
     AppIdInspector* appid_inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME,
         true);
 
-    if (appid_inspector and
-        (inspector.get_service() ==
-            appid_inspector->get_ctxt().config.snort_proto_ids[PROTO_INDEX_HTTP2]))
+    if (!appid_inspector)
+        return false;
+
+    SnortProtocolId id = inspector.get_service();
+    const AppIdConfig& config = appid_inspector->get_ctxt().config;
+    if (id == config.snort_proto_ids[PROTO_INDEX_HTTP2] or id == config.snort_proto_ids[PROTO_INDEX_SSH])
         return true;
 
     return false;

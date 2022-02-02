@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -164,6 +164,7 @@ const char* Packet::get_type() const
         return "UDP";
 
     case PktType::PDU:
+    case PktType::USER:
     case PktType::FILE:
         if ( proto_bits & PROTO_BIT__TCP )
             return "TCP";

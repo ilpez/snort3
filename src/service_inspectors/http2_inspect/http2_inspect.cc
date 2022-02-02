@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -131,7 +131,8 @@ void Http2Inspect::eval(Packet* p)
     }
 
     session_data->set_processing_stream_id(source_id);
-    Http2Stream* stream = session_data->get_processing_stream(source_id, params->concurrent_streams_limit);
+    Http2Stream* const stream = session_data->get_processing_stream(source_id,
+        params->concurrent_streams_limit);
     if (!stream)
     {
         delete[] session_data->frame_data[source_id];

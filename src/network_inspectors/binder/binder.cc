@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -149,7 +149,7 @@ static std::string proto_to_string(unsigned proto)
             return "tcp";
         case PROTO_BIT__UDP:
             return "udp";
-        case PROTO_BIT__PDU:
+        case PROTO_BIT__USER:
             return "user";
         case PROTO_BIT__FILE:
             return "file";
@@ -453,6 +453,11 @@ void Stuff::apply_service(Flow& flow)
     }
     else if (wizard)
         flow.set_clouseau(wizard);
+    else if (!flow.flags.svc_event_generated)
+    {
+        DataBus::publish(FLOW_NO_SERVICE_EVENT, DetectionEngine::get_current_packet());
+        flow.flags.svc_event_generated = true;
+    }
 }
 
 void Stuff::apply_assistant(Flow& flow, const char* service)
@@ -605,7 +610,7 @@ bool Binder::configure(SnortConfig* sc)
             case PktType::TCP:  name = "stream_tcp"; break;
             case PktType::UDP:  name = "stream_udp"; break;
             case PktType::ICMP: name = "stream_icmp"; break;
-            case PktType::PDU:  name = "stream_user"; break;
+            case PktType::USER:  name = "stream_user"; break;
             case PktType::FILE: name = "stream_file"; break;
             default:            name = nullptr; break;
         }

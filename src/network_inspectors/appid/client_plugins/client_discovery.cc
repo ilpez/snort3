@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -35,7 +35,6 @@
 #include "client_app_bit.h"
 #include "client_app_msn.h"
 #include "client_app_rtp.h"
-#include "client_app_ssh.h"
 #include "client_app_timbuktu.h"
 #include "client_app_tns.h"
 #include "client_app_vnc.h"
@@ -62,7 +61,6 @@ void ClientDiscovery::initialize(AppIdInspector& inspector)
     new SipTcpClientDetector(this);
     new SipUdpClientDetector(this);
     new SmtpClientDetector(this);
-    new SshClientDetector(this);
     new TimbuktuClientDetector(this);
     new TnsClientDetector(this);
     new VncClientDetector(this);

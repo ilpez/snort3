@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -38,7 +38,7 @@ class HttpJsNorm
 public:
     HttpJsNorm(const HttpParaList::UriParam&, int64_t normalization_depth,
         int32_t identifier_depth, uint8_t max_template_nesting, uint32_t max_bracket_depth,
-        uint32_t max_scope_depth, const std::unordered_set<std::string>& built_in_ident);
+        uint32_t max_scope_depth, const std::unordered_set<std::string>& ignored_ids);
     ~HttpJsNorm();
 
     void set_detection_depth(size_t depth)
@@ -69,7 +69,7 @@ private:
     uint8_t max_template_nesting;
     uint32_t max_bracket_depth;
     uint32_t max_scope_depth;
-    const std::unordered_set<std::string>& built_in_ident;
+    const std::unordered_set<std::string>& ignored_ids;
     bool configure_once = false;
 
     snort::SearchTool* mpse_otag;

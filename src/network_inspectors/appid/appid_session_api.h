@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -183,6 +183,7 @@ private:
     void set_ss_application_ids(AppId service, AppId client, AppId payload, AppId misc,
         AppId referred, AppidChangeBits& change_bits, Flow& flow);
     void set_ss_application_ids(AppId client, AppId payload, AppidChangeBits& change_bits, Flow& flow);
+    void set_ss_application_ids_payload(AppId payload, AppidChangeBits& change_bits, Flow& flow);
     void set_application_ids_service(AppId service_id, AppidChangeBits& change_bits, Flow& flow);
     void set_netbios_name(AppidChangeBits& change_bits, const char* name);
     void set_netbios_domain(AppidChangeBits& change_bits, const char* domain);

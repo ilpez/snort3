@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -44,15 +44,27 @@ const StreamBuffer StreamSplitter::reassemble(
     Flow*, unsigned, unsigned offset, const uint8_t* p,
     unsigned n, uint32_t flags, unsigned& copied)
 {
-    copied = n;
     if (n == 0)
         return { nullptr, 0 };
 
     unsigned max;
     uint8_t* pdu_buf = DetectionEngine::get_next_buffer(max);
+    max = max > Packet::max_dsize ? Packet::max_dsize : max;
 
-    assert(offset + n < max);
+    n = std::min(n, max - offset);
+    /*
+    FIXIT:
+        - Extra bytes will be lost and will pass without inspection
+        - There is some inconsistency between IpsContext::buf_size (Codec::PKT_MAX)
+            and Packet::max_dsize(IP_MAXPACKET)
+        - reassemble returns data length(StreamBuffer::length) of 32-bit type, while some
+            callers use 16-bit type for the length
+        - How it correlates with stream_tcp.max_pdu which has {1460:32768} range,
+            should it be adjusted with --snaplen {68:65535}?
+    */
+
     memcpy(pdu_buf+offset, p, n);
+    copied = n;
 
     if ( flags & PKT_PDU_TAIL )
         return { pdu_buf, offset + n };
@@ -71,37 +83,23 @@ AtomSplitter::AtomSplitter(bool b, uint16_t sz) : StreamSplitter(b)
     min = base + get_flush_bucket_size();
 }
 
-unsigned AtomSplitter::adjust_to_fit(unsigned len)
-{
-    return std::min(SnortConfig::get_conf()->max_pdu - bytes_scanned, len);
-}
-
 StreamSplitter::Status AtomSplitter::scan(
-    Packet*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp)
+    Packet*, const uint8_t*, uint32_t len, uint32_t flags, uint32_t* fp)
 {
     bytes_scanned += len;
     segs++;
 
-    if ( bytes_scanned < scan_footprint
-        && bytes_scanned < SnortConfig::get_conf()->max_pdu )
-        return SEARCH;
-
-    if ( segs >= 2 && bytes_scanned >= min )
+    if ( segs >= 2 && bytes_scanned >= min && !(flags & PKT_MORE_TO_FLUSH) )
     {
         *fp = len;
+        reset();
         return FLUSH;
     }
     return SEARCH;
 }
 
 void AtomSplitter::reset()
-{  segs = scan_footprint = bytes_scanned = 0; }
-
-void AtomSplitter::update()
-{
-    reset();
-    min = base + get_flush_bucket_size();
-}
+{  segs = bytes_scanned = 0; }
 
 //--------------------------------------------------------------------------
 // log splitter

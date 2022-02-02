@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2012-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -709,6 +709,14 @@ void MimeSession::set_data_state(int state)
 void MimeSession::set_mime_stats(MimeStats* stats)
 {
     mime_stats = stats;
+}
+
+const BufferData& MimeSession::get_vba_inspect_buf()
+{
+    if (!decode_state)
+        return BufferData::buffer_null;
+
+    return decode_state->get_decomp_vba_data();
 }
 
 MailLogState* MimeSession::get_log_state()

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -836,7 +836,7 @@ void fp_set_context(IpsContext& c)
     c.context_num = 0;
 }
 
-void fp_clear_context(IpsContext& c)
+void fp_clear_context(const IpsContext& c)
 {
     delete c.stash;
     snort_free(c.otnx->matchInfo);

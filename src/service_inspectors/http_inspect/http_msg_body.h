@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -66,8 +66,7 @@ private:
     void do_enhanced_js_normalization(const Field& input, Field& output);
     void do_legacy_js_normalization(const Field& input, Field& output);
     void clean_partial(uint32_t& partial_inspected_octets, uint32_t& partial_detect_length,
-        uint8_t*& partial_detect_buffer,  uint32_t& partial_js_detect_length,
-        int32_t detect_length);
+        uint8_t*& partial_detect_buffer,  uint32_t& partial_js_detect_length);
     void bookkeeping_regular_flush(uint32_t& partial_detect_length,
         uint8_t*& partial_detect_buffer, uint32_t& partial_js_detect_length,
         int32_t detect_length);

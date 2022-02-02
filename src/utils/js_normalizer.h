@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -57,6 +57,13 @@ public:
 
     static size_t size()
     { return sizeof(JSNormalizer) + 16834; /* YY_BUF_SIZE */ }
+
+#ifdef CATCH_TEST_BUILD
+    const char* get_tmp_buf() const
+    { return tmp_buf; }
+    size_t get_tmp_buf_size() const
+    { return tmp_buf_size; }
+#endif
 
 #ifdef BENCHMARK_TEST
     void rewind_output()

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -42,12 +42,4 @@ bool SshPatternMatchers::empty() const
 AppId SshPatternMatchers::get_appid(const std::string& pattern) const
 {
     return ssh_patterns.at(pattern);
-}
-
-void SshPatternMatchers::finalize_patterns()
-{
-    ssh_patterns["dropbear"] = APP_ID_DROPBEAR;
-    ssh_patterns["OpenSSH"] = APP_ID_OPENSSH;
-    ssh_patterns["PuTTY"] = APP_ID_PUTTY;
-    ssh_patterns["lsh"] = APP_ID_LSH;
 }

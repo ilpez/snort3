@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -138,8 +138,9 @@ public:
 
     StreamSplitter* get_splitter(bool) override;
 
+    inline bool finished(Wand& w)
+    { return !w.hex && !w.spell && w.curse_tracker.empty(); }
     void reset(Wand&, bool tcp, bool c2s);
-    bool finished(Wand&);
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned, uint16_t&);
     bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned);
     bool cursebind(const vector<CurseServiceTracker>&, Flow*, const uint8_t*, unsigned);
@@ -175,7 +176,7 @@ MagicSplitter::~MagicSplitter()
     wizard->rem_ref();
 
     // release trackers
-    for (unsigned i=0; i<wand.curse_tracker.size(); i++)
+    for (unsigned i = 0; i < wand.curse_tracker.size(); i++)
         delete wand.curse_tracker[i].tracker;
 }
 
@@ -205,12 +206,30 @@ StreamSplitter::Status MagicSplitter::scan(
         count_miss(pkt->flow);
         trace_logf(wizard_trace, pkt, "%s streaming search abandoned\n", to_server() ? "c2s" : "s2c");
         wizard_processed_bytes = 0;
+        if (!pkt->flow->flags.svc_event_generated)
+        {
+            DataBus::publish(FLOW_NO_SERVICE_EVENT, pkt);
+            pkt->flow->flags.svc_event_generated = true;
+        }
         return ABORT;
     }
 
     // saving new last glob from current flow
     if ( wand.spell )
         bookmark = wand.spell->book.get_bookmark();
+
+    // FIXIT-L Ideally, this event should be raised after wizard aborts its search. However, this
+    // could take multiple packets because wizard needs wizard.max_search_depth payload bytes before
+    // it aborts. This is an issue for AppId which consumes this event. AppId is required to declare
+    // unknown service as soon as it can so that the flow actions (such as IPS block, etc) don't get
+    // delayed. Because AppId depends on wizard only for SSH detection and SSH inspector can be
+    // attached very early, event is raised here after first scan. In the future, wizard should be
+    // enhanced to abort sooner if it can't detect service.
+    if (!pkt->flow->service && !pkt->flow->flags.svc_event_generated)
+    {
+        DataBus::publish(FLOW_NO_SERVICE_EVENT, pkt);
+        pkt->flow->flags.svc_event_generated = true;
+    }
 
     // ostensibly continue but splitter will be swapped out upon hit
     return SEARCH;
@@ -353,21 +372,14 @@ bool Wizard::cast_spell(
     {
         w.spell = nullptr;
         w.hex = nullptr;
+
+        for ( const CurseServiceTracker& cst : w.curse_tracker )
+            delete cst.tracker;
+
+        w.curse_tracker.clear();
     }
 
     return false;
-}
-
-bool Wizard::finished(Wand& w)
-{
-    if ( w.hex or w.spell )
-        return false;
-
-    // FIXIT-L how to know curses are done?
-    if ( !w.curse_tracker.empty() )
-        return false;
-
-    return true;
 }
 
 //-------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -151,11 +151,8 @@ void ServiceAppDescriptor::set_id(AppId app_id, OdpContext& odp_ctxt)
     set_id(app_id);
     deferred = odp_ctxt.get_app_info_mgr().get_app_info_flags(app_id, APPINFO_FLAG_DEFER);
 }
-void ServiceAppDescriptor::update_stats(AppId, bool){}
 void ServiceAppDescriptor::set_port_service_id(AppId){}
 void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
-void ClientAppDescriptor::update_stats(AppId, bool) {}
-void PayloadAppDescriptor::update_stats(AppId, bool) {}
 
 // Stubs for AppIdModule
 AppIdModule::AppIdModule(): Module("appid_mock", "appid_mock_help") {}

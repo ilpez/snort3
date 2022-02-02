@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@
 #include "utils/cpp_macros.h"
 #include "utils/util.h"
 
-#include "appid_pegs.h"
+#include "appid_peg_counts.h"
 #include "service_plugins/service_discovery.h"
 
 class ServiceDetector;

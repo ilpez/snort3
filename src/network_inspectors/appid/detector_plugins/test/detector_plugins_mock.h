@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -181,10 +181,10 @@ AppIdHttpSession::~AppIdHttpSession()
 
 // Stubs for AppIdPegCounts
 // LCOV_EXCL_START
-void AppIdPegCounts::update_service_count(AppId, bool) { }
-void AppIdPegCounts::update_client_count(AppId, bool) { }
+void AppIdPegCounts::inc_service_count(AppId) { }
+void AppIdPegCounts::inc_client_count(AppId) { }
 void AppIdPegCounts::inc_user_count(AppId) { }
-void AppIdPegCounts::update_payload_count(AppId, bool) { }
+void AppIdPegCounts::inc_payload_count(AppId) { }
 
 THREAD_LOCAL AppIdStats appid_stats;
 void AppIdModule::sum_stats(bool) { }
@@ -219,10 +219,6 @@ bool AppIdReloadTuner::tune_resources(unsigned int)
 }
 void ApplicationDescriptor::set_id(AppId){}
 void ServiceAppDescriptor::set_id(AppId, OdpContext&){}
-void ServiceAppDescriptor::update_stats(AppId, bool){}
-void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
-void ClientAppDescriptor::update_stats(AppId, bool) {}
-void PayloadAppDescriptor::update_stats(AppId, bool) {}
 void ServiceDiscovery::initialize(AppIdInspector&) {}
 void ServiceDiscovery::reload() {}
 

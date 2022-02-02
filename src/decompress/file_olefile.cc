@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -307,7 +307,7 @@ void OleFile :: get_file_data(char* file, uint8_t*& file_data, uint32_t& data_le
                                     stream_size, sector_size);
 
                 memcpy(temp_data, (file_buf + byte_offset), bytes_to_copy);
-                temp_data += sector_size;
+                temp_data += bytes_to_copy;
                 data_len += bytes_to_copy;
 
                 int32_t next_sector = get_next_fat_sector(current_sector);
@@ -328,7 +328,7 @@ void OleFile :: get_file_data(char* file, uint8_t*& file_data, uint32_t& data_le
                                     stream_size, mini_sector_size);
 
                 memcpy(temp_data, (file_buf + byte_offset), bytes_to_copy);
-                temp_data += mini_sector_size;
+                temp_data += bytes_to_copy;
                 data_len += bytes_to_copy;
 
                 int32_t next_sector = get_next_mini_fat_sector(mini_sector);

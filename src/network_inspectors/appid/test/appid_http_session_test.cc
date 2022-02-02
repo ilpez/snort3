@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -184,6 +184,7 @@ TEST_GROUP(appid_http_session)
         session->flow = &flow;
         mock_hsession = new AppIdHttpSession(*session, 0);
         appidDebug = new AppIdDebug();
+        AppIdPegCounts::init_pegs();
     }
 
     void teardown() override
@@ -191,6 +192,7 @@ TEST_GROUP(appid_http_session)
         delete appidDebug;
         delete mock_hsession;
         delete session;
+        AppIdPegCounts::cleanup_pegs();
     }
 };
 

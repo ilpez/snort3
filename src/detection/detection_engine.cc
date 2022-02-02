@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -579,6 +579,7 @@ bool DetectionEngine::detect(Packet* p, bool offload_ok)
     case PktType::UDP:
     case PktType::ICMP:
     case PktType::FILE:
+    case PktType::USER:
         if ( offload_ok and p->flow )
             return offload(p);
 

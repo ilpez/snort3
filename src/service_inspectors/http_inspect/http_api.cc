@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -120,6 +120,7 @@ extern const BaseApi* ips_http_trailer;
 extern const BaseApi* ips_http_true_ip;
 extern const BaseApi* ips_http_uri;
 extern const BaseApi* ips_http_version;
+extern const BaseApi* ips_http_version_match;
 extern const BaseApi* ips_js_data;
 
 #ifdef BUILDING_SO
@@ -149,6 +150,7 @@ const BaseApi* sin_http[] =
     ips_http_true_ip,
     ips_http_uri,
     ips_http_version,
+    ips_http_version_match,
     ips_js_data,
     nullptr
 };

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -190,6 +190,10 @@ static const PegInfo dce2_smb_pegs[] =
         "total number of ioctl response header errors" },
     { CountType::NOW, "concurrent_sessions", "total concurrent sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent sessions" },
+    { CountType::SUM, "total_smb1_sessions", "total smb1 sessions" },
+    { CountType::SUM, "total_smb2_sessions", "total smb2 sessions" },
+    { CountType::SUM, "total_encrypted_sessions", "total encrypted sessions" },
+    { CountType::SUM, "total_mc_sessions", "total multichannel sessions" },
     { CountType::END, nullptr, nullptr }
 };
 

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -630,15 +630,17 @@ static bool interested(Module* m)
 
 
 //-------------------------------------------------------------------------
-// ffi methods
+// ffi methods - only called from Lua so cppcheck suppressions required
 //-------------------------------------------------------------------------
 
+// cppcheck-suppress unusedFunction
 SO_PUBLIC void clear_alias()
 {
     s_aliased_name.clear();
     s_aliased_type.clear();
 }
 
+// cppcheck-suppress unusedFunction
 SO_PUBLIC bool set_alias(const char* from, const char* to)
 {
     if ( !from or !to )
@@ -667,15 +669,37 @@ SO_PUBLIC bool set_alias(const char* from, const char* to)
     return true;
 }
 
+// cppcheck-suppress unusedFunction
 SO_PUBLIC void snort_whitelist_append(const char* s)
 {
     Shell::allowlist_append(s, false);
 }
 
+// cppcheck-suppress unusedFunction
 SO_PUBLIC void snort_whitelist_add_prefix(const char* s)
 {
     Shell::allowlist_append(s, true);
 }
+
+// cppcheck-suppress unusedFunction
+SO_PUBLIC const char* push_include_path(const char* file)
+{
+    static std::string path;
+    path = "";
+    const char* code = get_config_file(file, path);
+    push_parse_location(code, path.c_str(), file);
+    return path.c_str();
+}
+
+// cppcheck-suppress unusedFunction
+SO_PUBLIC void pop_include_path()
+{
+    pop_parse_location();
+}
+
+//-------------------------------------------------------------------------
+// ffi methods - also called internally so no cppcheck suppressions
+//-------------------------------------------------------------------------
 
 SO_PUBLIC bool open_table(const char* s, int idx)
 {
@@ -808,20 +832,6 @@ SO_PUBLIC bool set_string(const char* fqn, const char* s)
 {
     Value v(s);
     return set_value(fqn, v);
-}
-
-SO_PUBLIC const char* push_include_path(const char* file)
-{
-    static std::string path;
-    path = "";
-    const char* code = get_config_file(file, path);
-    push_parse_location(code, path.c_str(), file);
-    return path.c_str();
-}
-
-SO_PUBLIC void pop_include_path()
-{
-    pop_parse_location();
 }
 
 //-------------------------------------------------------------------------

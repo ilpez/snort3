@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -392,18 +392,6 @@ void AppIdSession::check_ssl_detection_restart(AppidChangeBits& change_bits,
         encrypted.client_id = pick_ss_client_app_id();
         encrypted.misc_id = pick_ss_misc_app_id();
         encrypted.referred_id = pick_ss_referred_payload_app_id();
-
-        // After decryption, new application ids might be detected
-        // overriding existing ones from the encrypted flow. Set overwritten id
-        // to update app statistics when new AppId is detected.
-        if (encrypted.service_id > APP_ID_NONE and client_inferred_service_id == APP_ID_NONE)
-            api.service.set_overwritten_id(encrypted.service_id);
-
-        if (encrypted.client_id > APP_ID_NONE)
-            api.client.set_overwritten_id(encrypted.client_id);
-
-        if (encrypted.payload_id > APP_ID_NONE)
-            api.payload.set_overwritten_id(encrypted.payload_id);
 
         reinit_session_data(change_bits, curr_tp_appid_ctxt);
         if (appidDebug->is_active())
@@ -948,6 +936,13 @@ void AppIdSession::set_ss_application_ids(AppId client_id, AppId payload_id,
 {
     assert(flow);
     api.set_ss_application_ids(client_id, payload_id, change_bits, *flow);
+}
+
+void AppIdSession::set_ss_application_ids_payload(AppId payload_id,
+    AppidChangeBits& change_bits)
+{
+    assert(flow);
+    api.set_ss_application_ids_payload(payload_id, change_bits, *flow);
 }
 
 void AppIdSession::set_application_ids_service(AppId service_id, AppidChangeBits& change_bits)

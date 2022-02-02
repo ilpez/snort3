@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -92,6 +92,7 @@ enum EventSid
     EVENT_TABLE_SIZE_UPDATE_NOT_AT_HEADER_START = 34,
     EVENT_MORE_THAN_2_TABLE_SIZE_UPDATES = 35,
     EVENT_HPACK_TABLE_SIZE_UPDATE_EXCEEDS_MAX = 36,
+    EVENT_UNEXPECTED_DATA_FRAME = 37,
     EVENT__MAX_VALUE
 };
 
@@ -147,6 +148,7 @@ enum Infraction
     INF_HEADER_UPPERCASE = 45,
     INF_INVALID_WINDOW_UPDATE_FRAME = 46,
     INF_WINDOW_UPDATE_FRAME_ZERO_INCREMENT = 47,
+    INF_UNEXPECTED_DATA_FRAME = 48,
     INF__MAX_VALUE
 };
 
