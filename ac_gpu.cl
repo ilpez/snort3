@@ -1,30 +1,23 @@
-void kernel ac_gpu(__global int *stateArray, __global uchar *xlatcase,
-                   __global const uchar *TxBuf, __global int *nBuf,
-                   __global int *result) {
+void kernel ac_gpu(__global const int *stateArray,
+                   __global const uchar *xlatcase, __global const uchar *TxBuf,
+                   __global const int *nBuf, __global int *result) {
 
-  int globalId = get_global_id(0);
-
-  int n = nBuf[globalId];
-  uchar *Tx = &(TxBuf[globalId * n]);
+  int size_per_workgroup = *nBuf / 384;
+  int start = size_per_workgroup * get_global_id(0);
+  int stop = start + size_per_workgroup;
 
   int state = 0;
   int nfound = 0;
   int sindex;
 
-  for (int i = 0; i < n; i++) {
-    sindex = xlatcase[Tx[i]];
+  for (int i = start; i < stop && i < *nBuf; i++) {
+    sindex = xlatcase[TxBuf[i]];
     if (stateArray[state * 258 + 1] == 1) {
-      // for (mlist = MatchList[state]; mlist; mlist = (*mlist).next) {
-      //   // mlist = MatchList[state];
-      //   if ((*mlist).nocase ||
-      //       (memcmp((*mlist).casepatrn, T - (*mlist).n, (*mlist).n) == 0)) {
-      //     nfound++;
-      //   }
-      // }
       nfound++;
-      result[globalId * n + i] = state;
+      barrier(CLK_GLOBAL_MEM_FENCE);
     }
     state = stateArray[state * 258 + 2u + sindex];
   }
-  // result[0] = 1;
+  result[0] = nfound;
+  barrier(CLK_GLOBAL_MEM_FENCE);
 }

@@ -23,6 +23,7 @@
 
 #include "main.h"
 
+#include <iostream>
 #include <thread>
 
 #include "control/control.h"
@@ -73,6 +74,9 @@
 //-------------------------------------------------------------------------
 
 using namespace snort;
+
+unsigned long match_packets = 0;
+unsigned long match_instances = 0;
 
 static bool exit_requested = false;
 static int main_exit_code = 0;
@@ -1149,6 +1153,10 @@ int main(int argc, char* argv[])
         snort_main();
 
     Snort::cleanup();
+
+    std::cout << "\n";
+    std::cout << "Matched instances: " << match_instances << std::endl;
+    std::cout << "Matched packets: " << match_packets << std::endl;
 
     return main_exit_code;
 }

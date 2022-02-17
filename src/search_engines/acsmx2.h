@@ -27,6 +27,7 @@
 #include <cstdint>
 
 #include "search_common.h"
+#include "main.h"
 
 namespace snort
 {

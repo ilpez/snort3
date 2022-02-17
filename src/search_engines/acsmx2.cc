@@ -1740,6 +1740,9 @@ int acsm_search_dfa_full(
                     if (match (mlist->udata, mlist->rule_option_tree, index, context, \
                         mlist->neg_list) > 0) \
                     { \
+                        match_instances += nfound; \
+                        if (nfound) \
+                            match_packets += 1; \
                         *current_state = state; \
                         return nfound; \
                     } \
@@ -1807,11 +1810,18 @@ int acsm_search_dfa_full_all(
             nfound++;
             if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
             {
+                match_instances += nfound;
+                if (nfound)
+                    match_packets += 1;
                 *current_state = state;
                 return nfound;
             }
         }
     }
+
+    match_instances += nfound;
+    if (nfound)
+        match_packets += 1;
 
     *current_state = state;
     return nfound;

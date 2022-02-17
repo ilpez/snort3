@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include "search_common.h"
+#include "main.h"
 
 #define CL_HPP_TARGET_OPENCL_VERSION 200
 #define CL_HPP_ENABLE_EXCEPTIONS
@@ -21,7 +22,7 @@ typedef unsigned int acstate_t;
 
 #define MAX_PACKET_SIZE 64 * 1024
 
-#define BUFFER_SIZE 8
+// #define BUFFER_SIZE 8
 
 struct ACSM_PATTERN3
 {
@@ -81,16 +82,15 @@ struct ACSM_STRUCT3
     cl::CommandQueue queue;
 
     // OpenCL Shared Data Structure
-    int buffer_index;
-    uint8_t *packet_buffer;
-    int *packet_length_buffer;
+    // int buffer_index;
+    uint8_t *packet;
+    int *packet_length;
     int *stateArray;
-    // ACSM_PATTERN3 *matchArray;
+    int *resultArray;
 
     // OpenCL Input Buffer
     cl::Buffer cl_stateTable; // int
     cl::Buffer cl_xlatcase;   // uint8_t x 256
-    // cl::Buffer cl_matchTable; // ACSM_PATTERN3
     cl::Buffer cl_Tx;         // uint8_t
     cl::Buffer cl_n;          // int
 
@@ -115,6 +115,7 @@ int acsm_search_dfa_gpu(
     ACSM_STRUCT3 *, const uint8_t *Tx, int n, MpseMatch,
     void *context, int *current_state);
 
+// void gpu_search(ACSM_STRUCT3 *);
 void acsmFree3(ACSM_STRUCT3 *);
 int acsmPatternCount3(ACSM_STRUCT3 *);
 void acsmCompressStates(ACSM_STRUCT3 *, int);

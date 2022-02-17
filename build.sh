@@ -1,4 +1,4 @@
-./configure_cmake.sh --prefix=$HOME/snort-builds
+./configure_cmake.sh --prefix=$HOME/snort-builds --build-type=Release
 cd build
 make -j 5 install
 

@@ -48,5 +48,8 @@ int main_detach(lua_State* = nullptr);
 
 void main_poke(unsigned);
 
+extern unsigned long match_packets;
+extern unsigned long match_instances;
+
 #endif
 
