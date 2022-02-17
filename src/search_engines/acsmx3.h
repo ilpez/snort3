@@ -80,6 +80,7 @@ struct ACSM_STRUCT3
     // OpenCL Kernel Execution
     cl::Kernel kernel;
     cl::CommandQueue queue;
+    cl::Event search_event;
 
     // OpenCL Shared Data Structure
     // int buffer_index;
