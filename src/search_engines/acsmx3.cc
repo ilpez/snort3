@@ -942,13 +942,13 @@ int acsm_search_dfa_gpu(
 
     acsm->queue.enqueueNDRangeKernel(acsm->kernel, cl::NullRange, cl::NDRange(1), cl::NDRange(1), NULL, &acsm->search_event);
 
-    acsm->search_event.wait();
+    // acsm->search_event.wait();
 
     acsm->packet = (uint8_t *)acsm->queue.enqueueMapBuffer(acsm->cl_Tx, CL_FALSE, CL_MAP_WRITE, 0, sizeof(uint8_t) * MAX_PACKET_SIZE);
 
     acsm->packet_length = (int *)acsm->queue.enqueueMapBuffer(acsm->cl_n, CL_FALSE, CL_MAP_WRITE, 0, sizeof(int));
 
-    // acsm->queue.flush();
+    acsm->queue.flush();
     acsm->resultArray = (int *)acsm->queue.enqueueMapBuffer(acsm->cl_result, CL_FALSE, CL_MAP_READ, 0, sizeof(int));
 
     if (acsm->resultArray[0] > 0)
