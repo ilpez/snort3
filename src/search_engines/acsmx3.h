@@ -20,9 +20,9 @@ namespace snort
 typedef unsigned int acstate_t;
 #define ACSM_FAIL_STATE3 0xffffffff
 
-#define MAX_PACKET_SIZE 64 * 1024
+#define MAX_PACKET_SIZE 16 * 1024
 
-// #define BUFFER_SIZE 8
+#define BUFFER_SIZE 64
 
 struct ACSM_PATTERN3
 {
@@ -83,9 +83,9 @@ struct ACSM_STRUCT3
     cl::Event search_event;
 
     // OpenCL Shared Data Structure
-    // int buffer_index;
-    uint8_t *packet;
-    int *packet_length;
+    int buffer_index;
+    uint8_t *packet_buffer;
+    int *packet_length_buffer;
     int *stateArray;
     int *resultArray;
 
