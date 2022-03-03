@@ -1708,6 +1708,11 @@ int acsm_search_dfa_full(
         }
     }
 
+    if (nfound > 0) {
+        match_instances += nfound;
+        match_packets += 1;
+    }
+
     *current_state = state;
     return nfound;
 }

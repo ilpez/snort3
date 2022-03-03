@@ -22,7 +22,7 @@ typedef unsigned int acstate_t;
 
 #define MAX_PACKET_SIZE 16 * 1024
 
-#define BUFFER_SIZE 64
+#define BUFFER_SIZE 384
 
 struct ACSM_PATTERN3
 {
