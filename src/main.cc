@@ -1154,9 +1154,9 @@ int main(int argc, char* argv[])
 
     Snort::cleanup();
 
-    std::cout << "\n";
-    std::cout << "Matched instances: " << match_instances << std::endl;
-    std::cout << "Matched packets: " << match_packets << std::endl;
+    // std::cout << "\n";
+    // std::cout << "Matched instances: " << match_instances << std::endl;
+    // std::cout << "Matched packets: " << match_packets << std::endl;
 
     return main_exit_code;
 }

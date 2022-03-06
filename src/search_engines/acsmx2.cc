@@ -1637,12 +1637,6 @@ void acsmx2_print_qinfo()
             { \
                 index = T - Tx; \
                 nfound++; \
-                if (match (mlist->udata, mlist->rule_option_tree, index, context, \
-                    mlist->neg_list) > 0) \
-                { \
-                    *current_state = state; \
-                    return nfound; \
-                } \
             } \
         } \
         state = ps[2u + sindex]; \
@@ -1701,11 +1695,11 @@ int acsm_search_dfa_full(
     {
         index = T - Tx;
         nfound++;
-        if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
-        {
-            *current_state = state;
-            return nfound;
-        }
+        // if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
+        // {
+        //     *current_state = state;
+        //     return nfound;
+        // }
     }
 
     if (nfound > 0) {
@@ -1713,7 +1707,7 @@ int acsm_search_dfa_full(
         match_packets += 1;
     }
 
-    *current_state = state;
+    // *current_state = state;
     return nfound;
 }
 
