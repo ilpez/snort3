@@ -7,10 +7,10 @@ void kernel ac_gpu(__global const int *stateArray,
   // int start = size_per_workgroup * get_global_id(0);
   // int stop = start + size_per_workgroup;
   unsigned int globalId = get_global_id(0);
-  int kernelSize = 768;
+  int kernelSize = 3072;
   int partitionSize = *nBuf / kernelSize;
   int start = globalId * partitionSize;
-  int stop = start + partitionSize;
+  int stop = start + partitionSize + 9;
 
   int state = 0;
   int nfound = 0;

@@ -903,12 +903,6 @@ int acsm_search_dfa_gpu(
 
     acsm->queue.enqueueUnmapMemObject(acsm->cl_result, acsm->resultArray);
 
-    if (!n)
-    {
-        acsm->queue.enqueueUnmapMemObject(acsm->cl_result, acsm->resultArray);
-        acsm->queue.enqueueUnmapMemObject(acsm->cl_Tx, acsm->tx_map_ptr);
-    }
-
     *current_state = state;
     return nfound;
 }

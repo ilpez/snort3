@@ -24,7 +24,7 @@ typedef unsigned int acstate_t;
 
 // #define BUFFER_SIZE 125
 
-#define KERNEL_SIZE 768
+#define KERNEL_SIZE 3072
 
 struct ACSM_PATTERN3
 {
