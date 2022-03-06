@@ -885,11 +885,9 @@ int acsm_search_dfa_gpu(
 
     acsm->tx_map_ptr = (uint8_t *)acsm->queue.enqueueMapBuffer(acsm->cl_Tx, CL_FALSE, CL_MAP_WRITE, 0, sizeof(uint8_t) * acsm->buffer_size);
 
-    acsm->resultArray = (int *)acsm->queue.enqueueMapBuffer(acsm->cl_result, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * KERNEL_SIZE);
+    acsm->resultArray = (int *)acsm->queue.enqueueMapBuffer(acsm->cl_result, CL_FALSE, CL_MAP_READ, 0, sizeof(int) * KERNEL_SIZE);
 
-    // acsm->search_event.wait();
-
-    // acsm->queue.finish();
+    acsm->queue.finish();
 
     for (int b = 0; b < KERNEL_SIZE; b++)
     {
