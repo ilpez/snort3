@@ -20,10 +20,6 @@ namespace snort
 typedef unsigned int acstate_t;
 #define ACSM_FAIL_STATE3 0xffffffff
 
-// #define MAX_PACKET_SIZE 16 * 1024
-
-// #define BUFFER_SIZE 125
-
 #define KERNEL_SIZE 3072
 
 struct ACSM_PATTERN3

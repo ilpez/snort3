@@ -1021,9 +1021,10 @@ int acsmPrintSummaryInfo3()
     if (!summary.num_states)
         return 0;
 
-    LogValue("storage format", "Full");
+    LogValue("storage format", "full - single buffer");
     LogValue("finite automaton", "DFA");
     LogCount("alphabet size", p->acsmAlphabetSize);
+    LogCount("kernel size", KERNEL_SIZE);
 
     LogCount("instances", summary.num_instances);
     LogCount("patterns", summary.num_patterns);

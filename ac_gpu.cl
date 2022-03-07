@@ -3,11 +3,8 @@ void kernel ac_gpu(__global const int *stateArray,
                    __global const uchar *xlatcase, __global const uchar *TxBuf,
                    __global const int *nBuf, __global int *result) {
 
-  // int size_per_workgroup = *nBuf / 384;
-  // int start = size_per_workgroup * get_global_id(0);
-  // int stop = start + size_per_workgroup;
   unsigned int globalId = get_global_id(0);
-  int kernelSize = 3072;
+  int kernelSize = get_global_size(0);
   int partitionSize = *nBuf / kernelSize;
   int start = globalId * partitionSize;
   int stop = start + partitionSize + 9;
@@ -23,10 +20,8 @@ void kernel ac_gpu(__global const int *stateArray,
           (i - matchArray[state]) <= (start + partitionSize)) {
         nfound += 1;
       }
-      // barrier(CLK_GLOBAL_MEM_FENCE);
     }
     state = stateArray[state * 258 + 2u + sindex];
   }
   result[globalId] = nfound;
-  // barrier(CLK_GLOBAL_MEM_FENCE);
 }
