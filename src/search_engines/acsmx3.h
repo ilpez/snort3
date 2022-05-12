@@ -20,7 +20,7 @@ namespace snort
 typedef unsigned int acstate_t;
 #define ACSM_FAIL_STATE3 0xffffffff
 
-#define KERNEL_SIZE 3072
+#define KERNEL_SIZE 6144
 
 struct ACSM_PATTERN3
 {
