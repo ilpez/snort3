@@ -41,11 +41,16 @@ public:
     { obj = acsmNew2(agent, ACF_FULL); }
 
     ~AcfMpse() override
-    { acsmFree2(obj); }
+    { 
+        if (obj->packet_length_buffer > 0) {
+            match_instances += gpu_search(obj);
+        }
+        acsmFree2(obj); 
+    }
 
     void set_opt(int flag) override
     {
-        acsmCompressStates(obj, flag);
+        // acsmCompressStates(obj, flag);
         obj->enable_dfa();
     }
 
@@ -62,20 +67,20 @@ public:
         const uint8_t* T, int n, MpseMatch match,
         void* context, int* current_state) override
     {
-        if ( obj->dfa_enabled() )
-            return acsm_search_dfa_full(obj, T, n, match, context, current_state);
-
-        return acsm_search_nfa(obj, T, n, match, context, current_state);
+        int found = 0;
+        found = acsm_search_gpu(obj, T, n, match, context, current_state);
+        match_instances += found;
+        return found;
     }
 
     int search_all(
         const uint8_t* T, int n, MpseMatch match,
         void* context, int* current_state) override
     {
-        if ( !obj->dfa_enabled() )
-            return acsm_search_nfa(obj, T, n, match, context, current_state);
-        else
-            return acsm_search_dfa_full(obj, T, n, match, context, current_state);
+        int found = 0;
+        found = acsm_search_gpu(obj, T, n, match, context, current_state);
+        match_instances += found;
+        return found;
     }
 
     int print_info() override

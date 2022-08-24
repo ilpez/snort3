@@ -27,8 +27,15 @@
 #include <cstdint>
 
 #include "search_common.h"
-#include "main.h"
+#include "../my_utils.h"
 
+#define CL_HPP_TARGET_OPENCL_VERSION 200
+#define CL_TARGET_OPENCL_VERSION 200
+#include "CL/cl2.hpp"
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <algorithm>
 namespace snort
 {
 struct SnortConfig;
@@ -36,6 +43,20 @@ struct SnortConfig;
 
 #define MAX_ALPHABET_SIZE 256
 
+#define KERNEL_SIZE 6144
+
+#define BUFFER_SIZE 2000000
+
+#define PROFILING 1
+#if PROFILING
+#define PASTE_HELPER(a,b) a ## b
+#define PASTE(a,b) PASTE_HELPER(a,b)
+#define PROFILE_SCOPE(name) InstrumentationTimer PASTE(timer, __LINE__)(name)
+#define PROFILE_FUNCTION() PROFILE_SCOPE(__FUNCTION__)
+#else
+#define PROFILE_SCOPE(name)
+#define PROFILE_FUNCTION() PROFILE_SCOPE(__FUNCTION__)
+#endif
 /*
    FAIL STATE for 1,2,or 4 bytes for state transitions
    Uncomment this define to use 32 bit state values
@@ -134,6 +155,39 @@ struct ACSM_STRUCT2
 
     bool dfa_enabled()
     { return dfa; }
+
+    cl_int err;
+
+    // OpenCL Device Constructor
+    std::vector<cl::Platform> all_platforms;
+    cl::Platform platform;
+    std::vector<cl::Device> all_devices;
+    cl::Device device;
+
+    // OpenCL Kernel Constructor
+    cl::Context context;
+    cl::Program::Sources source;
+    cl::Program program;
+
+    // OpenCL Kernel Execution
+    cl::Kernel kernel;
+    cl::CommandQueue queue;
+
+    // OpenCL Shared Data Structure
+    int buffer_size;
+    uint8_t *tx_map_ptr;
+    int packet_length_buffer;
+    int *stateArray;
+    int *matchArray;
+    int *resultArray;
+
+    // OpenCL Input Buffer
+    cl::Buffer cl_stateTable; // int
+    cl::Buffer cl_xlatcase;   // uint8_t x 256
+    cl::Buffer cl_Tx;         // uint8_t
+
+    // OpenCL Output Buffer
+    cl::Buffer cl_result;
 };
 
 /*
@@ -163,6 +217,14 @@ int acsm_search_dfa_full(
 
 int acsm_search_dfa_full_all(
     ACSM_STRUCT2*, const uint8_t* Tx, int n, MpseMatch, void* context, int* current_state);
+
+int acsm_search_gpu(
+    ACSM_STRUCT2*, const uint8_t *Tx, int n, MpseMatch, void *context, int *current_state);
+
+int acsm_search_cpu(
+    ACSM_STRUCT2*, const uint8_t *Tx, int n, MpseMatch, void *context, int *current_state);
+
+int gpu_search(ACSM_STRUCT2*);
 
 void acsmFree2(ACSM_STRUCT2*);
 int acsmPatternCount2(ACSM_STRUCT2*);

@@ -1099,6 +1099,7 @@ static int Conv_Full_DFA_To_SparseBands(ACSM_STRUCT2* acsm)
 */
 ACSM_STRUCT2* acsmNew2(const MpseAgent* agent, int format)
 {
+    // PROFILE_FUNCTION();
     ACSM_STRUCT2* p = (ACSM_STRUCT2*)AC_MALLOC(sizeof (ACSM_STRUCT2), ACSM2_MEMORY_TYPE__NONE);
 
     if (p)
@@ -1111,6 +1112,42 @@ ACSM_STRUCT2* acsmNew2(const MpseAgent* agent, int format)
         p->acsmSparseMaxRowNodes = 256;
         p->acsmSparseMaxZcnt = 10;
         p->dfa = false;
+
+    	cl::Platform::get(&(p->all_platforms));
+		if(p->all_platforms.size()==0){
+        	printf("No platforms \n");
+    	}
+
+		p->platform=p->all_platforms[0];
+		
+		p->platform.getDevices(CL_DEVICE_TYPE_GPU, &(p->all_devices));
+
+		if(p->all_devices.size()==0){
+		   printf("No devices \n");
+		}
+
+		p->device=p->all_devices[0];
+
+		p->context = cl::Context(p->device);
+
+		p->queue = cl::CommandQueue(p->context,p->device);
+
+		std::ifstream sourceFile("ac_gpu.cl");
+		std::string sourceCode(
+			std::istreambuf_iterator<char>(sourceFile),
+		    (std::istreambuf_iterator<char>()));
+		
+		p->source.push_back({sourceCode.c_str(),sourceCode.length()});
+        sourceFile.close();
+        sourceCode.clear();
+		p->program = cl::Program(p->context,p->source);
+		if(p->program.build({p->device})!=CL_SUCCESS){
+		    printf(" Error building");
+			// std::cout << p->program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(p->device)<<"\n";		    
+		}
+
+		p->kernel = cl::Kernel(p->program, "ac_gpu");
+
     }
 
     return p;
@@ -1358,6 +1395,29 @@ int acsmCompile2(SnortConfig* sc, ACSM_STRUCT2* acsm)
 
     if ( acsm->agent )
         acsmBuildMatchStateTrees2(sc, acsm);
+
+    acstate_t *p;
+    acstate_t **NextState = acsm->acsmNextState;
+    acsm->stateArray = new int[acsm->acsmNumStates * 258];
+
+    for (int i = 0; i < acsm->acsmNumStates; i++) {
+        p = NextState[i];
+        if (!p) {
+            continue;
+        }
+
+        for (int j = 0; j < 258; j++) {
+            acsm->stateArray[(i * 258) + j] = p[j];
+        }
+    }
+
+    acsm->buffer_size = 0;
+    acsm->packet_length_buffer = 0;
+
+    acsm->cl_stateTable = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, acsm->acsmNumStates*258*sizeof(int), acsm->stateArray);
+    acsm->cl_xlatcase = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, 256 * sizeof(uint8_t), xlatcase);
+    acsm->cl_result = cl::Buffer(acsm->context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, KERNEL_SIZE * sizeof(int));
+
 
     return 0;
 }
@@ -1615,6 +1675,92 @@ void acsmx2_print_qinfo()
 {
 }
 
+int acsm_search_gpu(
+    ACSM_STRUCT2 *acsm, const uint8_t *Tx, int n, MpseMatch match, void *context, int *current_state
+) {
+    int totalFound = 0;
+    PROFILE_FUNCTION();
+
+    if (!acsm->buffer_size && n > 0) {
+        PROFILE_SCOPE("gpu_init");
+        acsm->buffer_size = BUFFER_SIZE;
+        acsm->cl_Tx = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(uint8_t) * acsm->buffer_size);
+        acsm->tx_map_ptr = (uint8_t *)acsm->queue.enqueueMapBuffer(acsm->cl_Tx, CL_TRUE, CL_MAP_WRITE, 0, sizeof(uint8_t) * acsm->buffer_size);
+    }
+
+    if (acsm->packet_length_buffer < (acsm->buffer_size - 3000) && n > 0) {
+        PROFILE_SCOPE("data_transfer_to_gpu");
+        memcpy(&(acsm->tx_map_ptr[acsm->packet_length_buffer]), Tx, sizeof(uint8_t) * n);
+        acsm->packet_length_buffer += n;
+        return 0;
+    }
+
+    if (n > 0) {
+        PROFILE_SCOPE("data_transfer_to_gpu");
+        memcpy(&(acsm->tx_map_ptr[acsm->packet_length_buffer]), Tx, sizeof(uint8_t) * n);
+        acsm->packet_length_buffer += n;
+    }
+
+    acsm->queue.enqueueUnmapMemObject(acsm->cl_Tx, acsm->tx_map_ptr);
+
+    if (!acsm->packet_length_buffer) {
+        return 0;
+    }
+
+    totalFound = gpu_search(acsm);
+
+    
+    acsm->queue.enqueueUnmapMemObject(acsm->cl_result, acsm->resultArray);
+    acsm->packet_length_buffer = 0;
+
+    if (!n) {
+        acsm->queue.enqueueUnmapMemObject(acsm->cl_result, acsm->resultArray);
+        acsm->queue.enqueueUnmapMemObject(acsm->cl_Tx, acsm->tx_map_ptr);
+    }
+
+    return totalFound;
+}
+
+int gpu_search(ACSM_STRUCT2 *acsm) {
+    int totalFound = 0;
+    int *length = &acsm->packet_length_buffer;
+
+    cl::Buffer cl_n = cl::Buffer(acsm->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(int*), length);
+
+    acsm->kernel.setArg(0, acsm->cl_stateTable);
+    acsm->kernel.setArg(1, acsm->cl_xlatcase);
+    acsm->kernel.setArg(2, acsm->cl_Tx);
+    acsm->kernel.setArg(3, cl_n);
+    acsm->kernel.setArg(4, acsm->cl_result);
+
+    PROFILE_SCOPE("gpu_search");
+    acsm->queue.enqueueNDRangeKernel(acsm->kernel, cl::NullRange, cl::NDRange(KERNEL_SIZE), cl::NDRange(1));
+    acsm->queue.flush();
+    acsm->queue.finish();
+    if (PROFILING) {
+        // delete &timer1736;
+        timer1736.Stop();
+    }
+
+    PROFILE_SCOPE("data_transfer_from_gpu");
+    acsm->resultArray = (int *)acsm->queue.enqueueMapBuffer(acsm->cl_result, CL_FALSE, CL_MAP_READ, 0, sizeof(int) * KERNEL_SIZE);
+    acsm->tx_map_ptr = (uint8_t *)acsm->queue.enqueueMapBuffer(acsm->cl_Tx, CL_FALSE, CL_MAP_WRITE, 0 , sizeof(uint8_t) * acsm->buffer_size);
+    acsm->queue.finish();
+
+    for (int i = 0; i < KERNEL_SIZE; i++) {
+        totalFound += acsm->resultArray[i];
+    }
+    if (PROFILING) {
+        // delete &timer1745;
+        timer1745.Stop();
+    }
+
+    acsm->queue.enqueueUnmapMemObject(acsm->cl_result, acsm->resultArray);
+    acsm->packet_length_buffer = 0;
+
+    return totalFound;
+}
+
 /*
 *   Full format DFA search
 *   Do not change anything here without testing, caching and prefetching
@@ -1637,6 +1783,12 @@ void acsmx2_print_qinfo()
             { \
                 index = T - Tx; \
                 nfound++; \
+                if (match (mlist->udata, mlist->rule_option_tree, index, context, \
+                    mlist->neg_list) > 0) \
+                { \
+                    *current_state = state; \
+                    return nfound; \
+                } \
             } \
         } \
         state = ps[2u + sindex]; \
@@ -1664,6 +1816,7 @@ int acsm_search_dfa_full(
 
     state = *current_state;
 
+    PROFILE_FUNCTION();
     switch (acsm->sizeofstate)
     {
     case 1:
@@ -1695,19 +1848,14 @@ int acsm_search_dfa_full(
     {
         index = T - Tx;
         nfound++;
-        // if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
-        // {
-        //     *current_state = state;
-        //     return nfound;
-        // }
+        if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
+        {
+            *current_state = state;
+            return nfound;
+        }
     }
 
-    if (nfound > 0) {
-        match_instances += nfound;
-        match_packets += 1;
-    }
-
-    // *current_state = state;
+    *current_state = state;
     return nfound;
 }
 
@@ -1806,18 +1954,10 @@ int acsm_search_dfa_full_all(
             nfound++;
             if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
             {
-                // match_instances += nfound;
-                // if (nfound)
-                //     match_packets += 1;
                 *current_state = state;
                 return nfound;
             }
         }
-    }
-
-    if (nfound > 0) {
-        match_instances += nfound;
-        match_packets += 1;
     }
 
     *current_state = state;

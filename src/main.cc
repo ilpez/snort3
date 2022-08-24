@@ -71,11 +71,11 @@
 #include "main/ac_shell_cmd.h"
 #endif
 
+#include "my_utils.h"
 //-------------------------------------------------------------------------
 
 using namespace snort;
 
-unsigned long match_packets = 0;
 unsigned long match_instances = 0;
 
 static bool exit_requested = false;
@@ -1021,6 +1021,7 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
 
 static void main_loop()
 {
+    match_instances = 0;
     unsigned swine = 0, pending_privileges = 0;
 
     if (SnortConfig::get_conf()->change_privileges())
@@ -1137,6 +1138,7 @@ static void snort_main()
 
 int main(int argc, char* argv[])
 {
+    Instrumentor::Get().BeginSession("Snort");
     set_mem_constraint_handler_s(log_safec_error);
     set_str_constraint_handler_s(log_safec_error);
 
@@ -1154,10 +1156,10 @@ int main(int argc, char* argv[])
 
     Snort::cleanup();
 
-    // std::cout << "\n";
-    // std::cout << "Matched instances: " << match_instances << std::endl;
-    // std::cout << "Matched packets: " << match_packets << std::endl;
+    std::cout << "\n";
+    std::cout << "Matched instances: " << match_instances << std::endl;
 
+    Instrumentor::Get().EndSession();
     return main_exit_code;
 }
 
