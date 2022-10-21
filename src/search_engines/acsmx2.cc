@@ -1737,10 +1737,8 @@ int gpu_search(ACSM_STRUCT2 *acsm) {
     acsm->queue.enqueueNDRangeKernel(acsm->kernel, cl::NullRange, cl::NDRange(KERNEL_SIZE), cl::NDRange(1));
     acsm->queue.flush();
     acsm->queue.finish();
-    if (PROFILING) {
-        // delete &timer1736;
-        timer1736.Stop();
-    }
+
+    //     timer1736.Stop();
 
     PROFILE_SCOPE("data_transfer_from_gpu");
     acsm->resultArray = (int *)acsm->queue.enqueueMapBuffer(acsm->cl_result, CL_FALSE, CL_MAP_READ, 0, sizeof(int) * KERNEL_SIZE);
@@ -1750,10 +1748,7 @@ int gpu_search(ACSM_STRUCT2 *acsm) {
     for (int i = 0; i < KERNEL_SIZE; i++) {
         totalFound += acsm->resultArray[i];
     }
-    if (PROFILING) {
-        // delete &timer1745;
-        timer1745.Stop();
-    }
+    // timer1743.Stop();
 
     acsm->queue.enqueueUnmapMemObject(acsm->cl_result, acsm->resultArray);
     acsm->packet_length_buffer = 0;

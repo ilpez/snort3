@@ -47,7 +47,7 @@ struct SnortConfig;
 
 #define BUFFER_SIZE 2000000
 
-#define PROFILING 1
+#define PROFILING 0
 #if PROFILING
 #define PASTE_HELPER(a,b) a ## b
 #define PASTE(a,b) PASTE_HELPER(a,b)
